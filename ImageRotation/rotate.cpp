@@ -194,14 +194,14 @@ void RotateWrapFillFastSrcSizeExp2(
     }
 }
 
-#define VOID_COLOR 0
+//#define VOID_COLOR 0
 
 /// <summary>
 /// Rotates source image and writes it to the destination.
 /// Nowrapping clipping version.
-/// The whole targed outside of source will be filled with 0
+/// Uncovered parts of target is kept as it was
 /// </summary>
-void RotateWithClip(
+void RotateDrawWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
@@ -259,7 +259,8 @@ void RotateWithClip(
             }
             else
             {
-                *pDst++ = VOID_COLOR;
+                pDst++; // Skip
+                //*pDst++ = VOID_COLOR; // Fill void (black)
             }
 
             u += duRow;

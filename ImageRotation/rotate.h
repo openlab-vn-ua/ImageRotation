@@ -16,7 +16,7 @@ void RotateWrapFill(
     float fAngle, float fScale);
  
 ///////////////////////////////////////////////////////////////////
-void RotateWithClip(
+void RotateDrawWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstRotCenterX, float fDstRotCenterY,
