@@ -5,10 +5,10 @@
 #define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
 
 //////////////////////////////////////////////////////////////////
-// Rotate - wrapping version
+// RotateWrapFill - wrapping version
 // This version takes any dimension source bitmap and wraps.
 //////////////////////////////////////////////////////////////////
-void Rotate(
+void RotateWrapFill(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
@@ -92,14 +92,14 @@ void Rotate(
     }
 }
 //////////////////////////////////////////////////////////////////
-// FastRotate - wrapping version
+// RotateWrapFillFastSrcSizeExp2 - wrapping version
 //
 // This version assumes the dimensions of the source image to be a 
-// power of two. For none-power2 dimensions, use Rotate
+// power of two. For none-power2 dimensions, use RotateWrapFill
 //
 //////////////////////////////////////////////////////////////////
  
-void FastRotate(
+void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
@@ -167,10 +167,8 @@ void FastRotate(
 }
  
 //////////////////////////////////////////////////////////////////
-// Rotate - nowrapping clipping version
-//
-// this version does not have the limitation of power of 2 
-// dimensions and will clip the source image instead of wrapping.
+// RotateWithClip - nowrapping clipping version
+// Will clip the source image instead of wrapping.
 //////////////////////////////////////////////////////////////////
  
 void RotateWithClip(

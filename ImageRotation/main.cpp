@@ -111,9 +111,9 @@ void Update(HDC hdc)
 {
     double dStartT = GetTimer();
  
-    // Call Rotate routine, using center of the window and the
+    // Call RotateWrapFill routine, using center of the window and the
     // center of the source image as the points to rotate around
-    FastRotate(
+    RotateWrapFillFastSrcSizeExp2(
         gDibDst->m_pSrcBits, gDibDst->m_iWidth, 
         gDibDst->m_iHeight, gDibDst->m_iSWidth,
         gDibSrc->m_pSrcBits, gDibSrc->m_iWidth, 

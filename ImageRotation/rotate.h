@@ -8,7 +8,7 @@ typedef uint16_t WDIBPIXEL;
 #endif
 
 ///////////////////////////////////////////////////////////////////
-void Rotate(
+void RotateWrapFill(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstRotCenterX, float fDstRotCenterY,
@@ -16,7 +16,7 @@ void Rotate(
     float fAngle, float fScale);
  
 ///////////////////////////////////////////////////////////////////
-void FastRotate(
+void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstRotCenterX, float fDstRotCenterY,
