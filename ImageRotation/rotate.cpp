@@ -4,6 +4,9 @@
 #define DEBUG_DRAW 1
 #define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
 
+/// <summary>
+/// Checks if source value is power of 2
+/// </summary>
 static bool IsExp2(unsigned int value) 
 { 
     return (value > 0 && (value & (value - 1)) == 0); 
@@ -17,10 +20,10 @@ void RotateWrapFillFastSrcSizeExp2(
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale);
 
-//////////////////////////////////////////////////////////////////
-// RotateWrapFill - wrapping version
-// This version takes any dimension source bitmap and wraps.
-//////////////////////////////////////////////////////////////////
+/// <summary>
+/// Rotates source image and writes it to the destination, filling all the target.
+/// This version takes any dimension source bitmap and wraps.
+/// </summary>
 void RotateWrapFill(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
@@ -117,13 +120,12 @@ void RotateWrapFill(
         rowv += dvCol;
     }
 }
-//////////////////////////////////////////////////////////////////
-// RotateWrapFillFastSrcSizeExp2 - wrapping version
-//
-// This version assumes the dimensions of the source image to be a 
-// power of two. For none-power2 dimensions, use RotateWrapFill
-//
-//////////////////////////////////////////////////////////////////
+
+/// <summary>
+/// Rotates source image and writes it to the destination, filling all the target.
+/// This version takes any dimension source bitmap and wraps.
+/// IMPORTANT: This version assumes the dimensions of the source image to be a power of two.
+/// </summary>
 static 
 void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
@@ -193,12 +195,16 @@ void RotateWrapFillFastSrcSizeExp2(
 }
  
 //////////////////////////////////////////////////////////////////
-// RotateWithClip - nowrapping clipping version
-// Will clip the source image instead of wrapping.
+// RotateWithClip - 
 //////////////////////////////////////////////////////////////////
  
 #define VOID_COLOR 0
 
+/// <summary>
+/// Rotates source image and writes it to the destination.
+/// Nowrapping clipping version.
+/// The whole targed outside of source will be filled with 0
+/// </summary>
 void RotateWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
@@ -222,7 +228,6 @@ void RotateWithClip(
  
     float rowu = startingu;
     float rowv = startingv;
- 
  
     for(int y = 0; y < dstH; y++)
     {
@@ -269,6 +274,3 @@ void RotateWithClip(
         rowv += dvCol;
     }
 }
-//////////////////////////////////////////////////////////////////
- 
-//End of File
