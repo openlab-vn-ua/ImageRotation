@@ -1,0 +1,17 @@
+#generic ignores
+
+.vs/
+.suo
+*.pdb
+*.cache
+*.g.i.cs
+*.i.lref
+TemporaryGeneratedFile_*.*
+*.CodeAnalysisLog.xml
+UpgradeLog.htm
+Debug/
+Release/
+x64/
+*.aps
+*.sdf
+*.vcxproj.user
