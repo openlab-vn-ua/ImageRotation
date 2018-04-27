@@ -12,6 +12,8 @@ void Rotate(
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
  
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
@@ -66,6 +68,9 @@ void FastRotate(
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
  
@@ -117,6 +122,9 @@ void RotateWithClip(
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
  
