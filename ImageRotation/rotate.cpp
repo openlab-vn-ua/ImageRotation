@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "rotate.h"
 #include <math.h>
  
 //////////////////////////////////////////////////////////////////
@@ -6,15 +6,15 @@
 // This version takes any dimension source bitmap and wraps.
 //////////////////////////////////////////////////////////////////
 void Rotate(
-    WORD *pDstBase, int dstW, int dstH, int dstDelta,
-    WORD *pSrcBase, int srcW, int srcH, int srcDelta,
+    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
+    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
  
-    srcDelta /= sizeof(WORD);
-    dstDelta /= sizeof(WORD);
+    srcDelta /= sizeof(WDIBPIXEL);
+    dstDelta /= sizeof(WDIBPIXEL);
  
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -32,14 +32,14 @@ void Rotate(
         float u = rowu;
         float v = rowv;
      
-        WORD *pDst = pDstBase + (dstDelta * y);
+        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
  
         for(int x = 0; x < dstW ; x++)
         {   
             int sx = ((u < 0.0 ? (int)-u : (int)u) + srcW) % srcW;
             int sy = ((v < 0.0 ? (int)-v : (int)v) + srcH) % srcH;
  
-            WORD *pSrc = pSrcBase + sx + (sy * srcDelta);
+            WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
                          
             *pDst++ = *pSrc++;
  
@@ -60,14 +60,14 @@ void Rotate(
 //////////////////////////////////////////////////////////////////
  
 void FastRotate(
-    WORD *pDstBase, int dstW, int dstH, int dstDelta,
-    WORD *pSrcBase, int srcW, int srcH, int srcDelta,
+    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
+    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
-    srcDelta /= sizeof(WORD);
-    dstDelta /= sizeof(WORD);
+    srcDelta /= sizeof(WDIBPIXEL);
+    dstDelta /= sizeof(WDIBPIXEL);
  
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -85,11 +85,11 @@ void FastRotate(
         float u = rowu;
         float v = rowv;
      
-        WORD *pDst = pDstBase + (dstDelta * y);
+        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
  
         for(int x = 0; x < dstW ; x++)
         {   
-            WORD *pSrc = pSrcBase + (((int)u) & srcW-1) + 
+            WDIBPIXEL *pSrc = pSrcBase + (((int)u) & srcW-1) + 
                          ((((int)v) & srcH-1) * srcDelta );
                          
             *pDst++ = *pSrc++;
@@ -111,14 +111,14 @@ void FastRotate(
 //////////////////////////////////////////////////////////////////
  
 void RotateWithClip(
-    WORD *pDstBase, int dstW, int dstH, int dstDelta,
-    WORD *pSrcBase, int srcW, int srcH, int srcDelta,
+    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
+    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
-    srcDelta /= sizeof(WORD);
-    dstDelta /= sizeof(WORD);
+    srcDelta /= sizeof(WDIBPIXEL);
+    dstDelta /= sizeof(WDIBPIXEL);
  
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -137,13 +137,13 @@ void RotateWithClip(
         float u = rowu;
         float v = rowv;
      
-        WORD *pDst = pDstBase + (dstDelta * y);
+        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
  
         for(int x = 0; x < dstW ; x++)
         {   
             if(u>0 && v>0 && u<srcW && v<srcH)
             {   
-                WORD *pSrc = pSrcBase + (int)u + 
+                WDIBPIXEL *pSrc = pSrcBase + (int)u + 
                                 ((int)v * srcDelta);
                      
                 *pDst++ = *pSrc++;
