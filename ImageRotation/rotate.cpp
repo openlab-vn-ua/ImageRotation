@@ -1,6 +1,9 @@
 #include "rotate.h"
 #include <math.h>
  
+#define DEBUG_DRAW 1
+#define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
+
 //////////////////////////////////////////////////////////////////
 // Rotate - wrapping version
 // This version takes any dimension source bitmap and wraps.
@@ -38,6 +41,16 @@ void Rotate(
  
         for(int x = 0; x < dstW ; x++)
         {   
+            #if DEBUG_DRAW
+            if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
+            {
+                *pDst++ = DEBUG_MARK_COLOR;
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
             int sx = ((u < 0.0 ? (int)-u : (int)u) + srcW) % srcW;
             int sy = ((v < 0.0 ? (int)-v : (int)v) + srcH) % srcH;
  
@@ -94,6 +107,16 @@ void FastRotate(
  
         for(int x = 0; x < dstW ; x++)
         {   
+            #if DEBUG_DRAW
+            if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
+            {
+                *pDst++ = DEBUG_MARK_COLOR;
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
             WDIBPIXEL *pSrc = pSrcBase + (((int)u) & srcW-1) + 
                          ((((int)v) & srcH-1) * srcDelta );
                          
@@ -149,6 +172,16 @@ void RotateWithClip(
  
         for(int x = 0; x < dstW ; x++)
         {   
+            #if DEBUG_DRAW
+            if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
+            {
+                *pDst++ = DEBUG_MARK_COLOR;
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
             if(u>0 && v>0 && u<srcW && v<srcH)
             {   
                 WDIBPIXEL *pSrc = pSrcBase + (int)u + 
