@@ -51,8 +51,33 @@ void Rotate(
             }
             #endif
 
-            int sx = ((u < 0.0 ? (int)-u : (int)u) + srcW) % srcW;
-            int sy = ((v < 0.0 ? (int)-v : (int)v) + srcH) % srcH;
+            int sx = (int)u;
+            int sy = (int)v;
+
+            // Negative u/v adjustement
+            // We need some additional proccessing for negative u and v values
+            // value in range (-0.99..;0) should be mapped to last source pixel, not zero
+            // Because zero source pixel already drawn at [0;0.99..)
+            // (else we will observe double line of same colored pixels in when u/v flips from + to -)
+            // Example: without shift u = -0.25 becimes sx=0, we need sx=-1, since we already had sx=0 at u=+0.25
+
+            if (u < 0)
+            {
+                // Negative u/v adjustement
+                sx--;
+                sx = -sx % srcW; sx = srcW - sx;
+            }
+
+            sx %= srcW;
+
+            if (v < 0)
+            {
+                // Negative u/v adjustement
+                sy--;
+                sy = -sy % srcH; sy = srcH - sy; 
+            }
+
+            sy %= srcH;
  
             WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
                          
@@ -117,8 +142,18 @@ void FastRotate(
             }
             #endif
 
-            WDIBPIXEL *pSrc = pSrcBase + (((int)u) & srcW-1) + 
-                         ((((int)v) & srcH-1) * srcDelta );
+            int sx = (int)u;
+            int sy = (int)v;
+
+            // Negative u/v adjustement
+
+            if (u < 0) { sx--; }
+            if (v < 0) { sy--; }
+
+            sx &= (srcW-1);
+            sy &= (srcH-1);
+
+            WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
                          
             *pDst++ = *pSrc++;
  
