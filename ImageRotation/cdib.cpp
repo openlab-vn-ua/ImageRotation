@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////////////
 // CDIB - Small wrapper class to handle DIB`s
  
-#include <windows.h>
 #include "cdib.h"
+#include <windows.h>
  
 //////////////////////////////////////////////////////////////////
 CDIB::CDIB()
@@ -36,7 +36,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     bmi.bmiHeader.biWidth           =   iWidth;
     bmi.bmiHeader.biHeight          =   iHeight;
     bmi.bmiHeader.biPlanes          =   1;
-    bmi.bmiHeader.biBitCount        =   16;
+    bmi.bmiHeader.biBitCount        =   WDIBPIXEL_BITS;
     bmi.bmiHeader.biCompression     =   BI_RGB;
     bmi.bmiHeader.biXPelsPerMeter   =   72;
     bmi.bmiHeader.biYPelsPerMeter   =   72;
@@ -45,7 +45,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     m_iHeight = iHeight;
      
     // Each line of the DIB is always quad aligned.
-    m_iSWidth = (((iWidth*sizeof(WORD)) + 3) & ~3); 
+    m_iSWidth = (((iWidth*sizeof(WDIBPIXEL)) + 3) & ~3); 
  
     // Get hdc of screen for CreateDIBSection and create the DIB
     HDC hdcScreen = GetDC(NULL);
