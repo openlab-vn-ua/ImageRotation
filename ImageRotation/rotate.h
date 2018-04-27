@@ -1,3 +1,6 @@
+#ifndef ROTATE_H_INCLUDED
+#define ROTATE_H_INCLUDED
+
 ///////////////////////////////////////////////////////////////////
 void Rotate(
     WORD *pDstBase, int dstW, int dstH, int dstDelta,
@@ -21,4 +24,5 @@ void RotateWithClip(
     float fDstRotCenterX, float fDstRotCenterY,
     float fSrcRotCenterX, float fSrcRotCenterY, 
     float fAngle, float fScale);
-/* End of File */
+
+#endif

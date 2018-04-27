@@ -1,3 +1,6 @@
+#ifndef CDLIB_H_INCLUDED
+#define CDLIB_H_INCLUDED
+
 ///////////////////////////////////////////////////////////////////
 class CDIB
 {
@@ -18,4 +21,5 @@ class CDIB
     int             m_iHeight;      // Height of the DIB
     int             m_iSWidth;      // Storage Width (in bytes)
 };
-/* End of File */
+
+#endif
