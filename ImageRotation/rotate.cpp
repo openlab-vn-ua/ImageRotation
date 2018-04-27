@@ -1,23 +1,23 @@
 #include "rotate.h"
 #include <math.h>
  
-#define DEBUG_DRAW 1
+#define DEBUG_DRAW 0
 #define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
 
 /// <summary>
 /// Checks if source value is power of 2
 /// </summary>
-static bool IsExp2(unsigned int value) 
-{ 
-    return (value > 0 && (value & (value - 1)) == 0); 
-} 
+static bool IsExp2(unsigned int value)
+{
+    return (value > 0 && (value & (value - 1)) == 0);
+}
 
 static // Foreward declaraion of faster func when srcW & srcH is power of 2
 void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
-    float fSrcCX, float fSrcCY, 
+    float fSrcCX, float fSrcCY,
     float fAngle, float fScale);
 
 /// <summary>
@@ -30,7 +30,7 @@ void RotateWrapFill(
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
-{   
+{
     if (IsExp2(srcW) && IsExp2(srcH))
     {
         RotateWrapFillFastSrcSizeExp2
@@ -38,7 +38,7 @@ void RotateWrapFill(
             pDstBase, dstW,dstH,dstDelta,
             pSrcBase,srcW, srcH, srcDelta,
             fDstCX, fDstCY,
-            fSrcCX, fSrcCY, 
+            fSrcCX, fSrcCY,
             fAngle, fScale
         );
         return;
@@ -46,30 +46,30 @@ void RotateWrapFill(
 
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
- 
+
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
- 
+
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
     float duRow = dvCol;
     float dvRow = -duCol;
- 
+
     float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
     float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
- 
+
     float rowu = startingu;
     float rowv = startingv;
- 
+
     for(int y = 0; y < dstH; y++)
     {
         float u = rowu;
         float v = rowv;
-     
+
         WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
- 
+
         for(int x = 0; x < dstW ; x++)
-        {   
+        {
             #if DEBUG_DRAW
             if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
             {
@@ -107,15 +107,15 @@ void RotateWrapFill(
             }
 
             sy %= srcH;
- 
+
             WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
                          
             *pDst++ = *pSrc++;
- 
+
             u += duRow;
             v += dvRow;
         }
- 
+
         rowu += duCol;
         rowv += dvCol;
     }
@@ -126,40 +126,40 @@ void RotateWrapFill(
 /// This version takes any dimension source bitmap and wraps.
 /// IMPORTANT: This version assumes the dimensions of the source image to be a power of two.
 /// </summary>
-static 
+static
 void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
-    float fSrcCX, float fSrcCY, 
+    float fSrcCX, float fSrcCY,
     float fAngle, float fScale)
-{   
+{
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
- 
+
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
     float duRow = dvCol;
     float dvRow = -duCol;
- 
+
     float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
     float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
- 
+
     float rowu = startingu;
     float rowv = startingv;
- 
+
     for(int y = 0; y < dstH; y++)
     {
         float u = rowu;
         float v = rowv;
-     
+
         WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
- 
+
         for(int x = 0; x < dstW ; x++)
-        {   
+        {
             #if DEBUG_DRAW
             if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
             {
@@ -182,22 +182,18 @@ void RotateWrapFillFastSrcSizeExp2(
             sy &= (srcH-1);
 
             WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
-                         
+
             *pDst++ = *pSrc++;
- 
+
             u += duRow;
             v += dvRow;
         }
- 
+
         rowu += duCol;
         rowv += dvCol;
     }
 }
- 
-//////////////////////////////////////////////////////////////////
-// RotateWithClip - 
-//////////////////////////////////////////////////////////////////
- 
+
 #define VOID_COLOR 0
 
 /// <summary>
@@ -209,35 +205,35 @@ void RotateWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
-    float fSrcCX, float fSrcCY, 
+    float fSrcCX, float fSrcCY,
     float fAngle, float fScale)
-{   
+{
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
     srcDelta /= sizeof(WDIBPIXEL);
     dstDelta /= sizeof(WDIBPIXEL);
- 
+
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
     float duRow = dvCol;
     float dvRow = -duCol;
- 
+
     float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
     float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
- 
+
     float rowu = startingu;
     float rowv = startingv;
- 
+
     for(int y = 0; y < dstH; y++)
     {
         float u = rowu;
         float v = rowv;
-     
+
         WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
- 
+
         for(int x = 0; x < dstW ; x++)
-        {   
+        {
             #if DEBUG_DRAW
             if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
             {
@@ -265,11 +261,11 @@ void RotateWithClip(
             {
                 *pDst++ = VOID_COLOR;
             }
- 
+
             u += duRow;
             v += dvRow;
         }
- 
+
         rowu += duCol;
         rowv += dvCol;
     }
