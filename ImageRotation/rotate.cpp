@@ -217,11 +217,17 @@ void RotateWithClip(
             }
             #endif
 
-            if(u>0 && v>0 && u<srcW && v<srcH)
-            {   
-                WDIBPIXEL *pSrc = pSrcBase + (int)u + 
-                                ((int)v * srcDelta);
-                     
+            int sx = (int)u;
+            int sy = (int)v;
+
+            // For non-negative values we have to check u and v (not sx and sy)
+            // since u = -0.25 gives sx=0 after rounsing, so 1 extra pixel line will be drawn
+            // (we assume that u,v >= 0 will lead to sx,sy >= 0)
+
+            if ((u >= 0) && (v >= 0) && (sx < srcW) && (sy < srcH))
+            {
+                WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
+
                 *pDst++ = *pSrc++;
             }
             else
