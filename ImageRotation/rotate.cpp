@@ -4,6 +4,19 @@
 #define DEBUG_DRAW 1
 #define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
 
+static bool IsExp2(unsigned int value) 
+{ 
+    return (value > 0 && (value & (value - 1)) == 0); 
+} 
+
+static // Foreward declaraion of faster func when srcW & srcH is power of 2
+void RotateWrapFillFastSrcSizeExp2(
+    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
+    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    float fDstCX, float fDstCY,
+    float fSrcCX, float fSrcCY, 
+    float fAngle, float fScale);
+
 //////////////////////////////////////////////////////////////////
 // RotateWrapFill - wrapping version
 // This version takes any dimension source bitmap and wraps.
@@ -15,6 +28,19 @@ void RotateWrapFill(
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {   
+    if (IsExp2(srcW) && IsExp2(srcH))
+    {
+        RotateWrapFillFastSrcSizeExp2
+        (
+            pDstBase, dstW,dstH,dstDelta,
+            pSrcBase,srcW, srcH, srcDelta,
+            fDstCX, fDstCY,
+            fSrcCX, fSrcCY, 
+            fAngle, fScale
+        );
+        return;
+    }
+
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
  
@@ -98,7 +124,7 @@ void RotateWrapFill(
 // power of two. For none-power2 dimensions, use RotateWrapFill
 //
 //////////////////////////////////////////////////////////////////
- 
+static 
 void RotateWrapFillFastSrcSizeExp2(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
@@ -171,6 +197,8 @@ void RotateWrapFillFastSrcSizeExp2(
 // Will clip the source image instead of wrapping.
 //////////////////////////////////////////////////////////////////
  
+#define VOID_COLOR 0
+
 void RotateWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
@@ -230,7 +258,7 @@ void RotateWithClip(
             }
             else
             {
-                *pDst++ = 0;
+                *pDst++ = VOID_COLOR;
             }
  
             u += duRow;

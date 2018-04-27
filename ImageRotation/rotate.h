@@ -16,14 +16,6 @@ void RotateWrapFill(
     float fAngle, float fScale);
  
 ///////////////////////////////////////////////////////////////////
-void RotateWrapFillFastSrcSizeExp2(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
-    float fDstRotCenterX, float fDstRotCenterY,
-    float fSrcRotCenterX, float fSrcRotCenterY, 
-    float fAngle, float fScale);
- 
-///////////////////////////////////////////////////////////////////
 void RotateWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
     WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
