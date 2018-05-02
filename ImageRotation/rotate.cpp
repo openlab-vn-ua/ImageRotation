@@ -300,6 +300,8 @@ void RotateDrawWithClipAlt
     // Optimisation based on:
     // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
 
+    angle = -angle; // to made rules consistent with RotateDrawWithClip
+
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
