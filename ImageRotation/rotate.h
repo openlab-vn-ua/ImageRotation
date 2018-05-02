@@ -1,10 +1,16 @@
 #ifndef ROTATE_H_INCLUDED
 #define ROTATE_H_INCLUDED
 
-#if !defined(WDIBPIXEL_BITS)
+#ifndef WDIBPIXEL_DEFINED
+#define WDIBPIXEL_DEFINED
 #include <stdint.h>
+#if WDIBPIXEL_BITS==16
 typedef uint16_t WDIBPIXEL;
-#define WDIBPIXEL_BITS (sizeof(WDIBPIXEL)*8)
+//#define WDIBPIXEL_BITS (16) 
+#else
+typedef uint32_t WDIBPIXEL;
+#define WDIBPIXEL_BITS (32) 
+#endif
 #endif
 
 ///////////////////////////////////////////////////////////////////

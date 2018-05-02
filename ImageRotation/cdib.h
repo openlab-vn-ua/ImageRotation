@@ -1,15 +1,16 @@
 #ifndef CDLIB_H_INCLUDED
 #define CDLIB_H_INCLUDED
 
-#if WDIBPIXEL_BITS==16
+#ifndef WDIBPIXEL_DEFINED
+#define WDIBPIXEL_DEFINED
 #include <stdint.h>
+#if WDIBPIXEL_BITS==16
 typedef uint16_t WDIBPIXEL;
 //#define WDIBPIXEL_BITS (16) 
 #else
 typedef uint32_t WDIBPIXEL;
 #define WDIBPIXEL_BITS (32) 
 #endif
-
 #endif
 
 #include <windows.h>
