@@ -18,10 +18,10 @@
     <ClCompile Include="cdib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="rotate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rotate.cpp">
+    <ClCompile Include="main2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
