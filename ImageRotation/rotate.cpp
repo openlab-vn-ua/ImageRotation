@@ -23,6 +23,7 @@ void RotateWrapFillFastSrcSizeExp2(
 /// <summary>
 /// Rotates source image and writes it to the destination, filling all the target.
 /// This version takes any dimension source bitmap and wraps.
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// </summary>
 void RotateWrapFill(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
@@ -124,6 +125,7 @@ void RotateWrapFill(
 /// <summary>
 /// Rotates source image and writes it to the destination, filling all the target.
 /// This version takes any dimension source bitmap and wraps.
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// IMPORTANT: This version assumes the dimensions of the source image to be a power of two.
 /// </summary>
 static
@@ -200,6 +202,7 @@ void RotateWrapFillFastSrcSizeExp2(
 /// Rotates source image and writes it to the destination.
 /// Nowrapping clipping version.
 /// Uncovered parts of target is kept as it was
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// </summary>
 void RotateDrawWithClip(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
