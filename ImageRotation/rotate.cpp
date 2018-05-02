@@ -638,7 +638,7 @@ void RotateDrawWithClipAlt2
 
     // Scale all to 32 bit int
 
-    #define OPT_FLOAT_ROW
+    // #define OPT_FLOAT_ROW
 
     int    ISCALE_SHIFT  = 16;
     int    ISCALE_FACTOR = ((int)1) << (ISCALE_SHIFT); // ISCALE_SHIFT=16, ISCALE_FACTOR=65536
@@ -659,6 +659,14 @@ void RotateDrawWithClipAlt2
     int pyi = py;
     #endif
 
+    #define OPT_SRC_ADDR
+
+    #ifdef OPT_SRC_ADDR
+    WDIBPIXEL *srcCurrent = src;
+    int srcCurrentu = 0;
+    int srcCurrentv = 0;
+    #endif
+
     for(y = miny; y <= maxy; y++)
     {
         #ifdef OPT_FLOAT_ROW
@@ -671,9 +679,9 @@ void RotateDrawWithClipAlt2
         int vi = rowvi + minx * dvRowi;
         #endif
 
-        WDIBPIXEL *dstStart = BM_DATA_ADD_OFS(dst, (y * dstDelta));
+        WDIBPIXEL *dstCurrent = BM_DATA_ADD_OFS(dst, (y * dstDelta));
 
-        dstStart += minx;
+        dstCurrent += minx;
 
         for(x = minx; x <= maxx; x++)
         {
@@ -686,7 +694,7 @@ void RotateDrawWithClipAlt2
                 BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
                 ui += duRowi;
                 vi += dvRowi;
-                dstStart++;
+                dstCurrent++;
                 continue;
             }
             #endif
@@ -695,13 +703,47 @@ void RotateDrawWithClipAlt2
             // else at angle 0 it draws 1 more pixel on the image left (rounding artifact?)
             if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH && ui > 0) // for some reason
             {
-                unsigned int c = BM_GET(src, srcDelta, uii, vii);
-                *dstStart++ = c;
+                unsigned int c;
+
+                #ifdef OPT_SRC_ADDR
+                int dv = vii - srcCurrentv;
+
+                if (dv == 0)
+                {
+                    // Noithing to do
+                }
+                else if (dv == 1)
+                {
+                    srcCurrent = BM_DATA_ADD_OFS(srcCurrent, srcDelta);
+                }
+                else if (dv == -1)
+                {
+                    srcCurrent = BM_DATA_ADD_OFS(srcCurrent, -srcDelta);
+                }
+                else
+                {
+                    srcCurrent = BM_DATA_ADD_OFS(srcCurrent, srcDelta * dv);
+                }
+
+                srcCurrentv = vii;
+
+                int du = uii - srcCurrentu;
+
+                srcCurrent += du;
+
+                srcCurrentu = uii;
+
+                c = *srcCurrent;
+                #else
+                c = BM_GET(src, srcDelta, uii, vii);
+                #endif
+
+                *dstCurrent++ = c;
             }
             else
             {
                 #if DEBUG_DRAW
-                *dstStart++ = DEBUG_BACK_COLOR;
+                *dstCurrent++ = DEBUG_BACK_COLOR;
                 #endif
             }
 
