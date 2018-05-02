@@ -281,14 +281,14 @@ void RotateDrawWithClip(
 
 /// <summary>
 /// Rotates source image and writes it to the destination.
-/// Nowrapping clipping version
+/// Nowrapping clipping version (double prec) [somewat computationaly unstable]
 /// Optimised version, only updated region at target affected
 /// px, py = pivot point in source
 /// ox, oy = place where pivot point will be located in target
 /// Uncovered parts of target is kept as it was
 /// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// </summary>
-void RotateDrawWithClipAlt
+void RotateDrawWithClipAltD
     (
         WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
@@ -406,5 +406,320 @@ void RotateDrawWithClipAlt
         rowu += duCol;
         rowv += dvCol;
     }
+}
+
+/// <summary>
+/// Rotates source image and writes it to the destination.
+/// Nowrapping clipping version (single float version)
+/// Optimised version, only updated region at target affected
+/// px, py = pivot point in source
+/// ox, oy = place where pivot point will be located in target
+/// Uncovered parts of target is kept as it was
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
+/// </summary>
+void RotateDrawWithClipAlt
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        float ox, float oy, 
+        float px, float py, 
+        float angle, float scale
+    )
+{
+    // Optimisation based on:
+    // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
+
+    angle = -angle; // to made rules consistent with RotateDrawWithClip
+
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
+    int x,y;
+
+    // fill min/max reverced (invalid) values at first
+    int minx = dstW, miny = dstH;
+    int maxx = 0, maxy = 0;
+
+    float sinAngle = sin(angle);
+    float cosAngle = cos(angle);
+
+    float dx, dy;
+    // Compute the position of where each corner on the source bitmap
+    // will be on the destination to get a bounding box for scanning
+    dx = -cosAngle * px * scale + sinAngle * py * scale + ox;
+    dy = -sinAngle * px * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale + sinAngle * py * scale + ox;
+    dy = sinAngle * (srcW - px) * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = sinAngle * (srcW - px) * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = -cosAngle * px * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = -sinAngle * px * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    // Clipping
+    if(minx < 0) { minx = 0; }
+    if(maxx > dstW - 1) { maxx = dstW - 1; }
+    if(miny < 0) { miny = 0; }
+    if(maxy > dstH - 1) { maxy = dstH - 1; }
+
+    #if DEBUG_DRAW
+    //minx = 0;
+    //miny = 0;
+    //maxx = dstW-1;
+    //maxy = dstH-1;
+    #endif
+
+    float dvCol = cos(angle) / scale;
+    float duCol = sin(angle) / scale;
+
+    float duRow = dvCol;
+    float dvRow = -duCol;
+
+    float startu = px - (ox * dvCol + oy * duCol);
+    float startv = py - (ox * dvRow + oy * duRow);
+
+    float rowu = startu + miny * duCol;
+    float rowv = startv + miny * dvCol;
+
+    for(y = miny; y <= maxy; y++)
+    {
+        float u = rowu + minx * duRow;
+        float v = rowv + minx * dvRow;
+
+        for(x = minx; x <= maxx; x++)
+        {
+            #if DEBUG_DRAW
+            if ((int(u) == int(px)) && (int(v) == int(py)))
+            {
+                BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
+            if(u >= 0 && u < srcW && v >= 0 && v < srcH)
+            {
+                unsigned int c = BM_GET(src, srcDelta, (int)u, (int)v);
+                BM_SET(dst, dstDelta, x, y, c);
+            }
+            else
+            {
+                #if DEBUG_DRAW
+                BM_SET(dst, dstDelta, x, y, DEBUG_BACK_COLOR);
+                #endif
+            }
+
+            u += duRow;
+            v += dvRow;
+        }
+
+        rowu += duCol;
+        rowv += dvCol;
+    }
+}
+
+#define BM_DATA_ADD_OFS(src,offset) ((WDIBPIXEL *)(((char*)src) + (offset)))
+
+/// <summary>
+/// Rotates source image and writes it to the destination.
+/// Nowrapping clipping version
+/// Optimised version, only updated region at target affected (integer math)
+/// px, py = pivot point in source
+/// ox, oy = place where pivot point will be located in target
+/// Uncovered parts of target is kept as it was
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
+/// </summary>
+void RotateDrawWithClipAlt2
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        float ox, float oy, 
+        float px, float py, 
+        float angle, float scale
+    )
+{
+    // Optimisation based on:
+    // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
+    // Additional optimization inspired by:
+    // http://www.gamedev.ru/code/forum/?id=156842
+    // We assume that int is at least 32 bit integer here for all vars with i postfix
+
+    angle = -angle; // to made rules consistent with RotateDrawWithClip
+
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
+    int x,y;
+
+    // fill min/max reverced (invalid) values at first
+    int minx = dstW, miny = dstH;
+    int maxx = 0, maxy = 0;
+
+    float sinAngle = sin(angle);
+    float cosAngle = cos(angle);
+
+    float dx, dy;
+    // Compute the position of where each corner on the source bitmap
+    // will be on the destination to get a bounding box for scanning
+    dx = -cosAngle * px * scale + sinAngle * py * scale + ox;
+    dy = -sinAngle * px * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale + sinAngle * py * scale + ox;
+    dy = sinAngle * (srcW - px) * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = sinAngle * (srcW - px) * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = -cosAngle * px * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = -sinAngle * px * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    // Clipping
+    if(minx < 0) { minx = 0; }
+    if(maxx > dstW - 1) { maxx = dstW - 1; }
+    if(miny < 0) { miny = 0; }
+    if(maxy > dstH - 1) { maxy = dstH - 1; }
+
+    #if DEBUG_DRAW
+    //minx = 0;
+    //miny = 0;
+    //maxx = dstW-1;
+    //maxy = dstH-1;
+    #endif
+
+    // Let assume that image size is less that 16K x 16K
+    // in that case, 
+
+    float dvCol = cos(angle) / scale;
+    float duCol = sin(angle) / scale;
+
+    float duRow = dvCol;
+    float dvRow = -duCol;
+
+    float startu = px - (ox * dvCol + oy * duCol);
+    float startv = py - (ox * dvRow + oy * duRow);
+
+    float rowu = startu + miny * duCol;
+    float rowv = startv + miny * dvCol;
+
+    // Scale all to 32 bit int
+
+    #define OPT_FLOAT_ROW
+
+    int    ISCALE_SHIFT  = 16;
+    int    ISCALE_FACTOR = ((int)1) << (ISCALE_SHIFT); // ISCALE_SHIFT=16, ISCALE_FACTOR=65536
+
+    int    dvColi = dvCol * ISCALE_FACTOR;
+    int    duColi = duCol * ISCALE_FACTOR;
+    int    duRowi = duRow * ISCALE_FACTOR;
+    int    dvRowi = dvRow * ISCALE_FACTOR;
+
+    int    startui = startu * ISCALE_FACTOR;
+    int    startvi = startv * ISCALE_FACTOR;
+
+    int    rowui = rowu * ISCALE_FACTOR;
+    int    rowvi = rowv * ISCALE_FACTOR;
+
+    #if DEBUG_DRAW
+    int pxi = px;
+    int pyi = py;
+    #endif
+
+    for(y = miny; y <= maxy; y++)
+    {
+        #ifdef OPT_FLOAT_ROW
+        float u = rowu + minx * duRow;
+        float v = rowv + minx * dvRow;
+        int ui = u * ISCALE_FACTOR;
+        int vi = v * ISCALE_FACTOR;
+        #else
+        int ui = rowui + minx * duRowi;
+        int vi = rowvi + minx * dvRowi;
+        #endif
+
+        WDIBPIXEL *dstStart = BM_DATA_ADD_OFS(dst, (y * dstDelta));
+
+        dstStart += minx;
+
+        for(x = minx; x <= maxx; x++)
+        {
+            int uii = ui >> ISCALE_SHIFT;
+            int vii = vi >> ISCALE_SHIFT;
+
+            #if DEBUG_DRAW
+            if ((uii == pxi) && (vii == pyi))
+            {
+                BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
+                ui += duRowi;
+                vi += dvRowi;
+                dstStart++;
+                continue;
+            }
+            #endif
+
+            // For some reason (that needs more investigations we have to check for ui > 0 as well
+            // else at angle 0 it draws 1 more pixel on the image left (rounding artifact?)
+            if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH && ui > 0) // for some reason
+            {
+                unsigned int c = BM_GET(src, srcDelta, uii, vii);
+                *dstStart++ = c;
+            }
+            else
+            {
+                #if DEBUG_DRAW
+                *dstStart++ = DEBUG_BACK_COLOR;
+                #endif
+            }
+
+            ui += duRowi;
+            vi += dvRowi;
+        }
+
+        #ifdef OPT_FLOAT_ROW
+        rowu += duCol;
+        rowv += dvCol;
+        #else
+        rowui += duColi;
+        rowvi += dvColi;
+        #endif
+    }
+
+    #ifdef OPT_FLOAT_ROW
+    #undef OPT_FLOAT_ROW
+    #endif
 }
 

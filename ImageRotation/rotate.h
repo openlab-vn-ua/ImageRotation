@@ -30,13 +30,33 @@ void RotateDrawWithClip(
     float fAngle, float fScale);
 
 ///////////////////////////////////////////////////////////////////
-void RotateDrawWithClipAlt
+void RotateDrawWithClipAltD
     (
         WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
         double ox, double oy, 
         double px, double py, 
         double angle, double scale
+    );
+
+///////////////////////////////////////////////////////////////////
+void RotateDrawWithClipAlt
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        float ox, float oy, 
+        float px, float py, 
+        float angle, float scale
+    );
+
+///////////////////////////////////////////////////////////////////
+void RotateDrawWithClipAlt2
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        float ox, float oy, 
+        float px, float py, 
+        float angle, float scale
     );
 
 #endif
