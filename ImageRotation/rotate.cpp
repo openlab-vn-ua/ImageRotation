@@ -3,6 +3,7 @@
  
 #define DEBUG_DRAW 0
 #define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
+#define DEBUG_BACK_COLOR ((WDIBPIXEL)(0x3F6FCF))
 
 /// <summary>
 /// Checks if source value is power of 2
@@ -274,3 +275,134 @@ void RotateDrawWithClip(
         rowv += dvCol;
     }
 }
+
+#define BM_GET(src,stride,x,y) ((WDIBPIXEL *)(((char*)src) + ((x)*sizeof(WDIBPIXEL) + (y)*(stride))))[0]
+#define BM_SET(dst,stride,x,y,c) ((WDIBPIXEL *)(((char*)dst) + ((x)*sizeof(WDIBPIXEL) + (y)*(stride))))[0] = (c)
+
+/// <summary>
+/// Rotates source image and writes it to the destination.
+/// Nowrapping clipping version
+/// Optimised version, only updated region at target affected
+/// px, py = pivot point in source
+/// ox, oy = place where pivot point will be located in target
+/// Uncovered parts of target is kept as it was
+/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
+/// </summary>
+void RotateDrawWithClipAlt
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        double ox, double oy, 
+        double px, double py, 
+        double angle, double scale
+    )
+{
+    // Optimisation based on:
+    // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
+
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
+    int x,y;
+
+    // fill min/max reverced (invalid) values at first
+    int minx = dstW, miny = dstH;
+    int maxx = 0, maxy = 0;
+
+    double sinAngle = sin(angle);
+    double cosAngle = cos(angle);
+
+    double dx, dy;
+    // Compute the position of where each corner on the source bitmap
+    // will be on the destination to get a bounding box for scanning
+    dx = -cosAngle * px * scale + sinAngle * py * scale + ox;
+    dy = -sinAngle * px * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale + sinAngle * py * scale + ox;
+    dy = sinAngle * (srcW - px) * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = sinAngle * (srcW - px) * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = -cosAngle * px * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = -sinAngle * px * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    // Clipping
+    if(minx < 0) { minx = 0; }
+    if(maxx > dstW - 1) { maxx = dstW - 1; }
+    if(miny < 0) { miny = 0; }
+    if(maxy > dstH - 1) { maxy = dstH - 1; }
+
+    #if DEBUG_DRAW
+    //minx = 0;
+    //miny = 0;
+    //maxx = dstW-1;
+    //maxy = dstH-1;
+    #endif
+
+    double dvCol = cos(angle) / scale;
+    double duCol = sin(angle) / scale;
+
+    double duRow = dvCol;
+    double dvRow = -duCol;
+
+    double startu = px - (ox * dvCol + oy * duCol);
+    double startv = py - (ox * dvRow + oy * duRow);
+
+    double rowu = startu + miny * duCol;
+    double rowv = startv + miny * dvCol;
+
+    for(y = miny; y <= maxy; y++)
+    {
+        double u = rowu + minx * duRow;
+        double v = rowv + minx * dvRow;
+
+        for(x = minx; x <= maxx; x++)
+        {
+            #if DEBUG_DRAW
+            if ((int(u) == int(px)) && (int(v) == int(py)))
+            {
+                BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
+            if(u >= 0 && u < srcW && v >= 0 && v < srcH)
+            {
+                unsigned int c = BM_GET(src, srcDelta, (int)u, (int)v);
+                BM_SET(dst, dstDelta, x, y, c);
+            }
+            else
+            {
+                #if DEBUG_DRAW
+                BM_SET(dst, dstDelta, x, y, DEBUG_BACK_COLOR);
+                #endif
+            }
+
+            u += duRow;
+            v += dvRow;
+        }
+
+        rowu += duCol;
+        rowv += dvCol;
+    }
+}
+

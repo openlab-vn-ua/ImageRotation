@@ -29,4 +29,14 @@ void RotateDrawWithClip(
     float fSrcRotCenterX, float fSrcRotCenterY, 
     float fAngle, float fScale);
 
+///////////////////////////////////////////////////////////////////
+void RotateDrawWithClipAlt
+    (
+        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
+        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        double ox, double oy, 
+        double px, double py, 
+        double angle, double scale
+    );
+
 #endif
