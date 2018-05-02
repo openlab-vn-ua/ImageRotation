@@ -3,6 +3,8 @@
  
 #include "cdib.h"
 #include <windows.h>
+
+#define ROUND_UP(VAL, MOD) ((((VAL) + (MOD) - 1) / (MOD)) * (MOD))
  
 //////////////////////////////////////////////////////////////////
 CDIB::CDIB()
@@ -28,13 +30,19 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
 {
     // Release the old DIB
     Release();
+
+    #if defined(CDLIB_BITMAP_BOTTOM_TOP)
+    int iInitHeight = iHeight;
+    #else
+    int iInitHeight = -iHeight;
+    #endif
  
     // fill in the BITMAPINFO structure
     BITMAPINFO bmi;
     ZeroMemory(&bmi, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize            =   sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth           =   iWidth;
-    bmi.bmiHeader.biHeight          =   iHeight;
+    bmi.bmiHeader.biHeight          =   iInitHeight;
     bmi.bmiHeader.biPlanes          =   1;
     bmi.bmiHeader.biBitCount        =   WDIBPIXEL_BITS;
     bmi.bmiHeader.biCompression     =   BI_RGB;
@@ -45,7 +53,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     m_iHeight = iHeight;
      
     // Each line of the DIB is always quad aligned.
-    m_iSWidth = (((iWidth*sizeof(WDIBPIXEL)) + 3) & ~3); 
+    m_iSWidth = ROUND_UP(iWidth*sizeof(WDIBPIXEL), 4); 
  
     // Get hdc of screen for CreateDIBSection and create the DIB
     HDC hdcScreen = GetDC(NULL);
