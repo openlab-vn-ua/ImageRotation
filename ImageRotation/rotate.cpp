@@ -638,7 +638,7 @@ void RotateDrawWithClipAlt2
 
     // Scale all to 32 bit int
 
-    // #define OPT_FLOAT_ROW
+    #define OPT_INT_ROW // use int math on row step
 
     int    ISCALE_SHIFT  = 16;
     int    ISCALE_FACTOR = ((int)1) << (ISCALE_SHIFT); // ISCALE_SHIFT=16, ISCALE_FACTOR=65536
@@ -659,7 +659,7 @@ void RotateDrawWithClipAlt2
     int pyi = py;
     #endif
 
-    #define OPT_SRC_ADDR
+    #define OPT_SRC_ADDR // use int add/sub instead of mul where possible
 
     #ifdef OPT_SRC_ADDR
     WDIBPIXEL *srcCurrent = src;
@@ -669,14 +669,14 @@ void RotateDrawWithClipAlt2
 
     for(y = miny; y <= maxy; y++)
     {
-        #ifdef OPT_FLOAT_ROW
-        float u = rowu + minx * duRow;
-        float v = rowv + minx * dvRow;
-        int ui = u * ISCALE_FACTOR;
-        int vi = v * ISCALE_FACTOR;
-        #else
+        #ifdef OPT_INT_ROW
         int ui = rowui + minx * duRowi;
         int vi = rowvi + minx * dvRowi;
+        #else
+        float u = rowu + minx * duRow;
+        float v = rowv + minx * dvRow;
+        int  ui = u * ISCALE_FACTOR;
+        int  vi = v * ISCALE_FACTOR;
         #endif
 
         WDIBPIXEL *dstCurrent = BM_DATA_ADD_OFS(dst, (y * dstDelta));
@@ -701,7 +701,7 @@ void RotateDrawWithClipAlt2
 
             // For some reason (that needs more investigations we have to check for ui > 0 as well
             // else at angle 0 it draws 1 more pixel on the image left (rounding artifact?)
-            if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH && ui > 0) // for some reason
+            if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH && ui > 0)
             {
                 unsigned int c;
 
@@ -751,17 +751,21 @@ void RotateDrawWithClipAlt2
             vi += dvRowi;
         }
 
-        #ifdef OPT_FLOAT_ROW
-        rowu += duCol;
-        rowv += dvCol;
-        #else
+        #ifdef OPT_INT_ROW
         rowui += duColi;
         rowvi += dvColi;
+        #else
+        rowu += duCol;
+        rowv += dvCol;
         #endif
     }
 
-    #ifdef OPT_FLOAT_ROW
-    #undef OPT_FLOAT_ROW
+    #ifdef OPT_INT_ROW
+    #undef OPT_INT_ROW
+    #endif
+
+    #ifdef OPT_SRC_ADDR
+    #undef OPT_SRC_ADDR
     #endif
 }
 
