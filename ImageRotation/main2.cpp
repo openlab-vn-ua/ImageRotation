@@ -31,7 +31,7 @@ float   gdScaleDir      = 0.1f;
 float   gdAngleStep     = Math_PI/180.0;
 double  gdTicksPerSec   = 0.0;
 bool    gbTimeFunction  = false;
-bool    gbAutoMode      = true;
+bool    gbAutoMode      = false;
  
 /////////////////////////////////////////////////////////////////
 // Function Prototypes
@@ -174,8 +174,6 @@ void Update(HDC hdc)
  
     ZeroMemory(gDibDst->m_pSrcBits, gDibDst->m_iSWidth * gDibDst->m_iHeight);
 
-    double SrcAngle = -15.0;
-
     // Prepare parameters
     WDIBPIXEL *pDstBase = gDibDst->m_pSrcBits; int dstW = gDibDst->m_iWidth; int dstH = gDibDst->m_iHeight; int dstDelta = gDibDst->m_iSWidth;
     WDIBPIXEL *pSrcBase = gDibSrc->m_pSrcBits; int srcW = gDibSrc->m_iWidth; int srcH = gDibSrc->m_iHeight; int srcDelta = gDibSrc->m_iSWidth;
@@ -186,18 +184,23 @@ void Update(HDC hdc)
 
     //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190);
 
-    // Call Rotate routine
-    // center of the source image as the points to rotate around
-    RotateDrawWithClipAlt
-    //RotateDrawWithClip
-    //RotateWrapFill
-    (
-        pDstBase, dstW, dstH, dstDelta,
-        pSrcBase, srcW, srcH, srcDelta,
-        fDstCX, fDstCY,
-        fSrcCX, fSrcCY, 
-        fAngle, fScale
-    );
+    int TEST_COUNT = 10;
+
+    for (int i = 0; i < TEST_COUNT; i++)
+    {
+        // Call Rotate routine
+        // center of the source image as the points to rotate around
+        RotateDrawWithClipAlt
+        //RotateDrawWithClip
+        //RotateWrapFill
+        (
+            pDstBase, dstW, dstH, dstDelta,
+            pSrcBase, srcW, srcH, srcDelta,
+            fDstCX, fDstCY,
+            fSrcCX, fSrcCY, 
+            fAngle, fScale
+        );
+    }
      
     double dUpdateT = GetTimer();
 
@@ -218,7 +221,7 @@ void Update(HDC hdc)
         char szBuffer[256];
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Rotate took %7.3fms (~%7.2ffps) ",
-             (dUpdateT-dStartT) * 1000, 1.0 / (dUpdateT-dStartT)));
+             (dUpdateT-dStartT) * 1000.0 / TEST_COUNT, 1.0 / ((dUpdateT-dStartT) / TEST_COUNT)));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Render took %7.3fms (~%7.2ffps)",
