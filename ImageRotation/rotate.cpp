@@ -660,6 +660,7 @@ void RotateDrawWithClipAlt2
     #endif
 
     #define OPT_SRC_ADDR // use int add/sub instead of mul where possible
+    #define OPT_DST_ADDR // use ++ in dst addr instead of BM_SET
 
     #ifdef OPT_SRC_ADDR
     WDIBPIXEL *srcCurrent = src;
@@ -679,9 +680,10 @@ void RotateDrawWithClipAlt2
         int  vi = v * ISCALE_FACTOR;
         #endif
 
+        #ifdef OPT_DST_ADDR
         WDIBPIXEL *dstCurrent = BM_DATA_ADD_OFS(dst, (y * dstDelta));
-
         dstCurrent += minx;
+        #endif
 
         for(x = minx; x <= maxx; x++)
         {
@@ -694,7 +696,9 @@ void RotateDrawWithClipAlt2
                 BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
                 ui += duRowi;
                 vi += dvRowi;
+                #ifdef OPT_DST_ADDR
                 dstCurrent++;
+                #endif
                 continue;
             }
             #endif
@@ -738,12 +742,24 @@ void RotateDrawWithClipAlt2
                 c = BM_GET(src, srcDelta, uii, vii);
                 #endif
 
+                #ifdef OPT_DST_ADDR
                 *dstCurrent++ = c;
+                #else
+                BM_SET(dst, dstDelta, x, y, c);
+                #endif
             }
             else
             {
                 #if DEBUG_DRAW
+                #ifdef OPT_DST_ADDR
                 *dstCurrent++ = DEBUG_BACK_COLOR;
+                #else
+                BM_SET(dst, dstDelta, x, y, DEBUG_BACK_COLOR);
+                #endif
+                #else
+                #ifdef OPT_DST_ADDR
+                dstCurrent++;
+                #endif
                 #endif
             }
 
@@ -766,6 +782,10 @@ void RotateDrawWithClipAlt2
 
     #ifdef OPT_SRC_ADDR
     #undef OPT_SRC_ADDR
+    #endif
+
+    #ifdef OPT_DST_ADDR
+    #undef OPT_DST_ADDR
     #endif
 }
 
