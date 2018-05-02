@@ -184,13 +184,15 @@ void Update(HDC hdc)
 
     //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190);
 
-    int TEST_COUNT = 10;
+    int TEST_COUNT = 100;
 
     for (int i = 0; i < TEST_COUNT; i++)
     {
         // Call Rotate routine
         // center of the source image as the points to rotate around
-        RotateDrawWithClipAlt
+        RotateDrawWithClipAlt2
+        //RotateDrawWithClipAltD
+        //RotateDrawWithClipAlt
         //RotateDrawWithClip
         //RotateWrapFill
         (
