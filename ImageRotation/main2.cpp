@@ -15,7 +15,7 @@
 #define _MINSCALE   0.4f
 #define _MAXSCALE   5.0f
 
-#define SZIMAGE     "test1_64.bmp"
+#define SZIMAGE     "test1.bmp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
