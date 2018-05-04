@@ -624,8 +624,8 @@ void RotateDrawWithClipAlt2
     // Let assume that image size is less that 16K x 16K
     // in that case, 
 
-    float dvCol = cos(angle) / scale;
-    float duCol = sin(angle) / scale;
+    float dvCol = cosAngle / scale;
+    float duCol = sinAngle / scale;
 
     float duRow = dvCol;
     float dvRow = -duCol;
@@ -643,6 +643,29 @@ void RotateDrawWithClipAlt2
     int    ISCALE_SHIFT  = 16;
     int    ISCALE_FACTOR = ((int)1) << (ISCALE_SHIFT); // ISCALE_SHIFT=16, ISCALE_FACTOR=65536
 
+    #define OPT_INT_PRECALC
+
+    #ifdef  OPT_INT_PRECALC
+
+    int    pxi = px * ISCALE_FACTOR;
+    int    pyi = py * ISCALE_FACTOR;
+
+    //int  oxi = ox * ISCALE_FACTOR;
+    //int  oyi = oy * ISCALE_FACTOR;
+
+    int    dvColi = dvCol * ISCALE_FACTOR;
+    int    duColi = duCol * ISCALE_FACTOR;
+    int    duRowi = dvColi;
+    int    dvRowi = -duColi;
+
+    int    startui = pxi - (ox * dvColi + oy * duColi);
+    int    startvi = pyi - (ox * dvRowi + oy * duRowi);
+
+    int    rowui = startui + miny * duColi;
+    int    rowvi = startvi + miny * dvColi;
+
+    #else
+
     int    dvColi = dvCol * ISCALE_FACTOR;
     int    duColi = duCol * ISCALE_FACTOR;
     int    duRowi = duRow * ISCALE_FACTOR;
@@ -654,9 +677,11 @@ void RotateDrawWithClipAlt2
     int    rowui = rowu * ISCALE_FACTOR;
     int    rowvi = rowv * ISCALE_FACTOR;
 
+    #endif
+
     #if DEBUG_DRAW
-    int pxi = px;
-    int pyi = py;
+    int pxii = px;
+    int pyii = py;
     #endif
 
     #define OPT_SRC_ADDR // use int add/sub instead of mul where possible
@@ -691,7 +716,7 @@ void RotateDrawWithClipAlt2
             int vii = vi >> ISCALE_SHIFT;
 
             #if DEBUG_DRAW
-            if ((uii == pxi) && (vii == pyi))
+            if ((uii == pxii) && (vii == pyii))
             {
                 BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
                 ui += duRowi;
@@ -703,9 +728,11 @@ void RotateDrawWithClipAlt2
             }
             #endif
 
-            // For some reason (that needs more investigations we have to check for ui > 0 as well
-            // else at angle 0 it draws 1 more pixel on the image left (rounding artifact?)
-            if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH && ui > 0)
+            // For some reason (that needs more investigations) we may need to check for ui > 0 as well 
+            // else at angle 0 it draws 1 more pixel on the image left with zoom ~> 5
+            // This check is not added here because it would not draw left column with it with zoom ~= 1
+
+            if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH)
             {
                 unsigned int c;
 
