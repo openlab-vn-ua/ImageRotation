@@ -32,7 +32,7 @@ float   gdAngleStep     = Math_PI/180.0;
 double  gdTicksPerSec   = 0.0;
 bool    gbTimeFunction  = false;
 bool    gbAutoMode      = false;
-int     giViewZoomScale = 3; // Initial zoom scale
+int     giViewZoomScale = 5; // Initial zoom scale
  
 /////////////////////////////////////////////////////////////////
 // Function Prototypes
@@ -180,7 +180,7 @@ void Update(HDC hdc)
     WDIBPIXEL *pDstBase = gDibDst->m_pSrcBits; int dstW = gDibDst->m_iWidth; int dstH = gDibDst->m_iHeight; int dstDelta = gDibDst->m_iSWidth;
     WDIBPIXEL *pSrcBase = gDibSrc->m_pSrcBits; int srcW = gDibSrc->m_iWidth; int srcH = gDibSrc->m_iHeight; int srcDelta = gDibSrc->m_iSWidth;
     float fDstCX = dstW * 0.50 / giViewZoomScale + 5; float fDstCY = dstH * 0.50 / giViewZoomScale + 30;
-    float fSrcCX = srcW * 0.00 - 10; float fSrcCY = srcH * 0.00 + 10;
+    float fSrcCX = srcW * 0.00 + 0; float fSrcCY = srcH * 0.50 + 0;
     float fAngle = gdAngle;
     float fScale = gdScale;
 
@@ -189,15 +189,15 @@ void Update(HDC hdc)
 
     //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190); // work this way also, so you may clip region before draw
 
-    int TEST_COUNT = 100;
+    int TEST_COUNT = 10;
 
     for (int i = 0; i < TEST_COUNT; i++)
     {
         // Call Rotate routine
         // center of the source image as the points to rotate around
-        //RotateDrawWithClipAlt2
+        RotateDrawWithClipAlt2
         //RotateDrawWithClipAltD
-        RotateDrawWithClipAlt
+        //RotateDrawWithClipAlt
         //RotateDrawWithClip
         //RotateWrapFill
         (
@@ -278,10 +278,10 @@ void Update(HDC hdc)
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Angle %3.6frad %4.1fdeg Scale %3.6f src X=%3.1f Y=%3.1f",
-             (float)gdAngle,(gdAngle/Math_PI*180.0), (float)gdScale, (float) fSrcCX, (float) fSrcCY));
+             (float)gdAngle, (float)(gdAngle/Math_PI*180.0), (float)gdScale, (float) fSrcCX, (float) fSrcCY));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Left/Right = Rotate, PgUp/PgDn = Scale+/-, A = Auto on/off"));
+             sprintf_s(szBuffer, "Left/Right = Rotate, PgUp/PgDn = Scale+/-, A = Auto on/off, r=Reset"));
     }
 }
 ////////////////////////////////////////////////////////////////
@@ -401,6 +401,15 @@ void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
         case('A'): // (VK_A):
         {
             gbAutoMode = !gbAutoMode;
+            DoRedraw(hwnd);
+        } break;
+
+        case('R'):
+        {
+            gdScale    = 1.0 ; // _MAXSCALE;
+            gdAngle    = 0.0*Math_PI/180.0;
+            gdScaleDir = 0.1f;
+            DoRedraw(hwnd);
         } break;
 
         default:
