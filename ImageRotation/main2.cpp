@@ -25,13 +25,14 @@ double Math_PI = M_PI; // 3.1415;
 // Globals
 CDIB*   gDibSrc         = NULL;
 CDIB*   gDibDst         = NULL;
-float   gdScale         = _MAXSCALE;
+float   gdScale         = 1.0 ; // _MAXSCALE;
 float   gdAngle         = 0.0*Math_PI/180.0;
 float   gdScaleDir      = 0.1f;
 float   gdAngleStep     = Math_PI/180.0;
 double  gdTicksPerSec   = 0.0;
 bool    gbTimeFunction  = false;
 bool    gbAutoMode      = false;
+int     giViewZoomScale = 3; // Initial zoom scale
  
 /////////////////////////////////////////////////////////////////
 // Function Prototypes
@@ -165,6 +166,7 @@ bool ClipImage(WDIBPIXEL *(&pDstBase), int (&dstW), int (&dstH), int dstStride, 
 #define TEST_STEP_SCALE_FORE()  { if (gdScale < _MAXSCALE) { gdScale += fabs(gdScaleDir)*1.0f; } }
 #define TEST_STEP_SCALE_BACK()  { if (gdScale > _MINSCALE) { gdScale -= fabs(gdScaleDir)*1.0f; } }
 
+#define COLORREF_COLOR_BLACK    RGB(0, 0, 0)
 #define COLORREF_COLOR_GOLD     RGB(0xFF, 0xD7, 0x00)
 
 /////////////////////////////////////////////////////////////////
@@ -177,12 +179,15 @@ void Update(HDC hdc)
     // Prepare parameters
     WDIBPIXEL *pDstBase = gDibDst->m_pSrcBits; int dstW = gDibDst->m_iWidth; int dstH = gDibDst->m_iHeight; int dstDelta = gDibDst->m_iSWidth;
     WDIBPIXEL *pSrcBase = gDibSrc->m_pSrcBits; int srcW = gDibSrc->m_iWidth; int srcH = gDibSrc->m_iHeight; int srcDelta = gDibSrc->m_iSWidth;
-    float fDstCX = dstW * 0.50 + 0 ; float fDstCY = dstH * 0.50 + 0 ;
+    float fDstCX = dstW * 0.50 / giViewZoomScale + 5; float fDstCY = dstH * 0.50 / giViewZoomScale + 30;
     float fSrcCX = srcW * 0.00 - 10; float fSrcCY = srcH * 0.00 + 10;
     float fAngle = gdAngle;
     float fScale = gdScale;
 
-    //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190);
+    fDstCX = (int)fDstCX;
+    fDstCY = (int)fDstCY;
+
+    //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190); // work this way also, so you may clip region before draw
 
     int TEST_COUNT = 100;
 
@@ -190,9 +195,9 @@ void Update(HDC hdc)
     {
         // Call Rotate routine
         // center of the source image as the points to rotate around
-        RotateDrawWithClipAlt2
+        //RotateDrawWithClipAlt2
         //RotateDrawWithClipAltD
-        //RotateDrawWithClipAlt
+        RotateDrawWithClipAlt
         //RotateDrawWithClip
         //RotateWrapFill
         (
@@ -206,10 +211,48 @@ void Update(HDC hdc)
      
     double dUpdateT = GetTimer();
 
-    // Copy our rotated image to the screen
-    BitBlt(hdc, 0, 0, gDibDst->m_iWidth, gDibDst->m_iHeight, gDibDst->m_hdc, 0, 0, SRCCOPY);
-    
-    SetPixel(hdc, fDstCX, fDstCY, COLORREF_COLOR_GOLD); // Draw center
+    // Copy our rotated image to the screen (possible zoomed)
+
+    if (giViewZoomScale <= 1)
+    {
+        BitBlt(hdc, 0, 0, gDibDst->m_iWidth, gDibDst->m_iHeight, gDibDst->m_hdc, 0, 0, SRCCOPY);
+        SetPixel(hdc, fDstCX, fDstCY, COLORREF_COLOR_GOLD); // Draw center
+    }
+    else
+    {
+        int zoomWidth  = gDibDst->m_iWidth * giViewZoomScale;
+        int zoomHeight = gDibDst->m_iHeight * giViewZoomScale;
+        int fromWidth  = gDibDst->m_iWidth;
+        int fromHeight = gDibDst->m_iHeight;
+
+        auto res = 
+        StretchDIBits
+        (
+            hdc,
+            0,
+            0,
+            zoomWidth, 
+            zoomHeight,
+            0,
+            0,
+            fromWidth,
+            fromHeight,
+            gDibDst->m_pSrcBits,
+            gDibDst->GetBMI(),
+            gDibDst->GetDIBUsage(),
+            SRCCOPY
+        );
+
+        int cx = fDstCX * giViewZoomScale;
+        int cy = fDstCY * giViewZoomScale;
+
+        RECT  center;
+        
+        SetRect(&center, cx, cy, cx+giViewZoomScale, cy+giViewZoomScale);
+        FillRect(hdc, &center, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+        SetPixel(hdc, cx, cy, COLORREF_COLOR_GOLD); // Draw center
+    }
 
     double dRenderT = GetTimer();
  
@@ -220,14 +263,18 @@ void Update(HDC hdc)
 
         int TEXT_HEIGHT = 15;
 
+        SetBkColor(hdc, COLORREF_COLOR_BLACK);
+        SetBkMode(hdc, TRANSPARENT);
+        SetTextColor(hdc, COLORREF_COLOR_GOLD);
+
         char szBuffer[256];
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Rotate took %7.3fms (~%7.2ffps) ",
+             sprintf_s(szBuffer, "Rotate took %7.3fms (~%7.2ffps)",
              (dUpdateT-dStartT) * 1000.0 / TEST_COUNT, 1.0 / ((dUpdateT-dStartT) / TEST_COUNT)));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Render took %7.3fms (~%7.2ffps)",
-             (dRenderT-dUpdateT) * 1000, 1.0 / (dRenderT-dUpdateT)));
+             sprintf_s(szBuffer, "Render took %7.3fms (~%7.2ffps) [VIEW ZOOM: %d]",
+             (dRenderT-dUpdateT) * 1000, 1.0 / (dRenderT-dUpdateT), giViewZoomScale));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Angle %3.6frad %4.1fdeg Scale %3.6f src X=%3.1f Y=%3.1f",
