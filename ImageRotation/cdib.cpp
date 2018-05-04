@@ -38,7 +38,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     #endif
  
     // fill in the BITMAPINFO structure
-    BITMAPINFO bmi;
+    //BITMAPINFO bmi;
     ZeroMemory(&bmi, sizeof(BITMAPINFO));
     bmi.bmiHeader.biSize            =   sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth           =   iWidth;
@@ -58,7 +58,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     // Get hdc of screen for CreateDIBSection and create the DIB
     HDC hdcScreen = GetDC(NULL);
     m_hbm = CreateDIBSection(
-                hdcScreen, &bmi, DIB_RGB_COLORS, 
+                hdcScreen, &bmi, GetDIBUsage(), 
                 (void**)&m_pSrcBits, NULL, 0);
  
     // Create and select the bitmap into a DC

@@ -34,6 +34,13 @@ class CDIB
     int             m_iWidth;       // Width of the DIB
     int             m_iHeight;      // Height of the DIB
     int             m_iSWidth;      // Storage Width (in bytes)
+
+    protected:
+    BITMAPINFO      bmi;
+
+    public:
+    BITMAPINFO     *GetBMI()         { return(&bmi); }
+    UINT            GetDIBUsage()    { return(DIB_RGB_COLORS); }
 };
 
 #endif
