@@ -8,7 +8,7 @@
 #include <windowsx.h>
 #include <stdio.h>
 #include "cdib.h"
-#include "rotate.h"
+#include "src/rotate.h"
  
 /////////////////////////////////////////////////////////////////
 // defines
