@@ -4,12 +4,18 @@
 #ifndef ROTATEPIXEL_T_DEFINED
 #define ROTATEPIXEL_T_DEFINED
 #include <stdint.h>
-#if ROTATEPIXEL_T_BITS==16
+#if ROTATEPIXEL_T_BITS==8
+typedef char RotatePixel_t;
+//#define ROTATEPIXEL_T_BITS (8)
+#elif ROTATEPIXEL_T_BITS==16
 typedef uint16_t RotatePixel_t;
-//#define ROTATEPIXEL_T_BITS (16) 
-#else
+//#define ROTATEPIXEL_T_BITS (16)
+#elif ROTATEPIXEL_T_BITS==24
+typedef struct { char _[3]; } RotatePixel_t;
+//#define ROTATEPIXEL_T_BITS (24)
+#else // 32
 typedef uint32_t RotatePixel_t;
-#define ROTATEPIXEL_T_BITS (32) 
+#define ROTATEPIXEL_T_BITS (32)
 #endif
 #endif
 
