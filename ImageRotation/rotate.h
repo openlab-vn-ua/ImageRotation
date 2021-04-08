@@ -13,6 +13,14 @@ typedef uint32_t WDIBPIXEL;
 #endif
 #endif
 
+typedef WDIBPIXEL (*RotateColorMergerFunc_t)(WDIBPIXEL newColor, WDIBPIXEL oldColor, void *Param);
+
+#ifdef __cplusplus
+#define ROTATE_DEF_PARAM(val) = val
+#else
+#define ROTATE_DEF_PARAM(val) // None
+#endif
+
 ///////////////////////////////////////////////////////////////////
 void RotateWrapFill(
     WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
@@ -46,7 +54,9 @@ void RotateDrawWithClipAlt
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
-        float angle, float scale
+        float angle, float scale,
+        RotateColorMergerFunc_t mergeFunc ROTATE_DEF_PARAM(NULL),
+        void *mergeParam ROTATE_DEF_PARAM(NULL)
     );
 
 ///////////////////////////////////////////////////////////////////
@@ -56,7 +66,9 @@ void RotateDrawWithClipAlt2
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
-        float angle, float scale
+        float angle, float scale,
+        RotateColorMergerFunc_t mergeFunc ROTATE_DEF_PARAM(NULL),
+        void *mergeParam ROTATE_DEF_PARAM(NULL)
     );
 
 #endif

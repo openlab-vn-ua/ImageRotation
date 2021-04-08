@@ -389,7 +389,7 @@ void RotateDrawWithClipAltD
 
             if(u >= 0 && u < srcW && v >= 0 && v < srcH)
             {
-                unsigned int c = BM_GET(src, srcDelta, (int)u, (int)v);
+                WDIBPIXEL c = BM_GET(src, srcDelta, (int)u, (int)v);
                 BM_SET(dst, dstDelta, x, y, c);
             }
             else
@@ -423,7 +423,9 @@ void RotateDrawWithClipAlt
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
-        float angle, float scale
+        float angle, float scale,
+        RotateColorMergerFunc_t mergeFunc,
+        void *mergeParam
     )
 {
     // Optimisation based on:
@@ -518,7 +520,14 @@ void RotateDrawWithClipAlt
 
             if(u >= 0 && u < srcW && v >= 0 && v < srcH)
             {
-                unsigned int c = BM_GET(src, srcDelta, (int)u, (int)v);
+                WDIBPIXEL c = BM_GET(src, srcDelta, (int)u, (int)v);
+
+                if (mergeFunc != NULL)
+                {
+                    WDIBPIXEL o = BM_GET(dst, dstDelta, x, y);
+                    c = mergeFunc(c, o, mergeParam);
+                }
+
                 BM_SET(dst, dstDelta, x, y, c);
             }
             else
@@ -554,7 +563,9 @@ void RotateDrawWithClipAlt2
         WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
-        float angle, float scale
+        float angle, float scale,
+        RotateColorMergerFunc_t mergeFunc,
+        void *mergeParam
     )
 {
     // Optimisation based on:
@@ -734,7 +745,7 @@ void RotateDrawWithClipAlt2
 
             if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH)
             {
-                unsigned int c;
+                WDIBPIXEL c;
 
                 #ifdef OPT_SRC_ADDR
                 int dv = vii - srcCurrentv;
@@ -768,6 +779,12 @@ void RotateDrawWithClipAlt2
                 #else
                 c = BM_GET(src, srcDelta, uii, vii);
                 #endif
+
+                if (mergeFunc != NULL)
+                {
+                    WDIBPIXEL o = *dstCurrent;
+                    c = mergeFunc(c, o, mergeParam);
+                }
 
                 #ifdef OPT_DST_ADDR
                 *dstCurrent++ = c;
