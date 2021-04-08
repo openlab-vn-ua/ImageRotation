@@ -2,8 +2,8 @@
 #include <math.h>
  
 #define DEBUG_DRAW 0
-#define DEBUG_MARK_COLOR ((WDIBPIXEL)(0xFFFFFF))
-#define DEBUG_BACK_COLOR ((WDIBPIXEL)(0x3F6FCF))
+#define DEBUG_MARK_COLOR ((RotatePixel_t)(0xFFFFFF))
+#define DEBUG_BACK_COLOR ((RotatePixel_t)(0x3F6FCF))
 
 /// <summary>
 /// Checks if source value is power of 2
@@ -15,8 +15,8 @@ static bool IsExp2(unsigned int value)
 
 static // Foreward declaraion of faster func when srcW & srcH is power of 2
 void RotateWrapFillFastSrcSizeExp2(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY,
     float fAngle, float fScale);
@@ -27,8 +27,8 @@ void RotateWrapFillFastSrcSizeExp2(
 /// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// </summary>
 void RotateWrapFill(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
@@ -49,8 +49,8 @@ void RotateWrapFill(
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
-    srcDelta /= sizeof(WDIBPIXEL);
-    dstDelta /= sizeof(WDIBPIXEL);
+    srcDelta /= sizeof(RotatePixel_t);
+    dstDelta /= sizeof(RotatePixel_t);
 
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -68,7 +68,7 @@ void RotateWrapFill(
         float u = rowu;
         float v = rowv;
 
-        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -110,7 +110,7 @@ void RotateWrapFill(
 
             sy %= srcH;
 
-            WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
+            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
                          
             *pDst++ = *pSrc++;
 
@@ -131,8 +131,8 @@ void RotateWrapFill(
 /// </summary>
 static
 void RotateWrapFillFastSrcSizeExp2(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY,
     float fAngle, float fScale)
@@ -140,8 +140,8 @@ void RotateWrapFillFastSrcSizeExp2(
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
-    srcDelta /= sizeof(WDIBPIXEL);
-    dstDelta /= sizeof(WDIBPIXEL);
+    srcDelta /= sizeof(RotatePixel_t);
+    dstDelta /= sizeof(RotatePixel_t);
 
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -159,7 +159,7 @@ void RotateWrapFillFastSrcSizeExp2(
         float u = rowu;
         float v = rowv;
 
-        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -184,7 +184,7 @@ void RotateWrapFillFastSrcSizeExp2(
             sx &= (srcW-1);
             sy &= (srcH-1);
 
-            WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
+            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
 
             *pDst++ = *pSrc++;
 
@@ -206,8 +206,8 @@ void RotateWrapFillFastSrcSizeExp2(
 /// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
 /// </summary>
 void RotateDrawWithClip(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY,
     float fAngle, float fScale)
@@ -215,8 +215,8 @@ void RotateDrawWithClip(
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
-    srcDelta /= sizeof(WDIBPIXEL);
-    dstDelta /= sizeof(WDIBPIXEL);
+    srcDelta /= sizeof(RotatePixel_t);
+    dstDelta /= sizeof(RotatePixel_t);
 
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -234,7 +234,7 @@ void RotateDrawWithClip(
         float u = rowu;
         float v = rowv;
 
-        WDIBPIXEL *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -257,7 +257,7 @@ void RotateDrawWithClip(
 
             if ((u >= 0) && (v >= 0) && (sx < srcW) && (sy < srcH))
             {
-                WDIBPIXEL *pSrc = pSrcBase + sx + (sy * srcDelta);
+                RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
 
                 *pDst++ = *pSrc++;
             }
@@ -276,8 +276,8 @@ void RotateDrawWithClip(
     }
 }
 
-#define BM_GET(src,stride,x,y) ((WDIBPIXEL *)(((char*)src) + ((x)*sizeof(WDIBPIXEL) + (y)*(stride))))[0]
-#define BM_SET(dst,stride,x,y,c) ((WDIBPIXEL *)(((char*)dst) + ((x)*sizeof(WDIBPIXEL) + (y)*(stride))))[0] = (c)
+#define BM_GET(src,stride,x,y) ((RotatePixel_t *)(((char*)src) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0]
+#define BM_SET(dst,stride,x,y,c) ((RotatePixel_t *)(((char*)dst) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0] = (c)
 
 /// <summary>
 /// Rotates source image and writes it to the destination.
@@ -290,8 +290,8 @@ void RotateDrawWithClip(
 /// </summary>
 void RotateDrawWithClipAltD
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         double ox, double oy, 
         double px, double py, 
         double angle, double scale
@@ -389,7 +389,7 @@ void RotateDrawWithClipAltD
 
             if(u >= 0 && u < srcW && v >= 0 && v < srcH)
             {
-                WDIBPIXEL c = BM_GET(src, srcDelta, (int)u, (int)v);
+                RotatePixel_t c = BM_GET(src, srcDelta, (int)u, (int)v);
                 BM_SET(dst, dstDelta, x, y, c);
             }
             else
@@ -419,8 +419,8 @@ void RotateDrawWithClipAltD
 /// </summary>
 void RotateDrawWithClipAlt
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
         float angle, float scale,
@@ -520,11 +520,11 @@ void RotateDrawWithClipAlt
 
             if(u >= 0 && u < srcW && v >= 0 && v < srcH)
             {
-                WDIBPIXEL c = BM_GET(src, srcDelta, (int)u, (int)v);
+                RotatePixel_t c = BM_GET(src, srcDelta, (int)u, (int)v);
 
                 if (mergeFunc != NULL)
                 {
-                    WDIBPIXEL o = BM_GET(dst, dstDelta, x, y);
+                    RotatePixel_t o = BM_GET(dst, dstDelta, x, y);
                     c = mergeFunc(c, o, mergeParam);
                 }
 
@@ -546,7 +546,7 @@ void RotateDrawWithClipAlt
     }
 }
 
-#define BM_DATA_ADD_OFS(src,offset) ((WDIBPIXEL *)(((char*)src) + (offset)))
+#define BM_DATA_ADD_OFS(src,offset) ((RotatePixel_t *)(((char*)src) + (offset)))
 
 /// <summary>
 /// Rotates source image and writes it to the destination.
@@ -559,8 +559,8 @@ void RotateDrawWithClipAlt
 /// </summary>
 void RotateDrawWithClipAlt2
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
         float angle, float scale,
@@ -699,7 +699,7 @@ void RotateDrawWithClipAlt2
     #define OPT_DST_ADDR // use ++ in dst addr instead of BM_SET
 
     #ifdef OPT_SRC_ADDR
-    WDIBPIXEL *srcCurrent = src;
+    RotatePixel_t *srcCurrent = src;
     int srcCurrentu = 0;
     int srcCurrentv = 0;
     #endif
@@ -717,7 +717,7 @@ void RotateDrawWithClipAlt2
         #endif
 
         #ifdef OPT_DST_ADDR
-        WDIBPIXEL *dstCurrent = BM_DATA_ADD_OFS(dst, (y * dstDelta));
+        RotatePixel_t *dstCurrent = BM_DATA_ADD_OFS(dst, (y * dstDelta));
         dstCurrent += minx;
         #endif
 
@@ -745,7 +745,7 @@ void RotateDrawWithClipAlt2
 
             if(uii >= 0 && uii < srcW && vii >= 0 && vii < srcH)
             {
-                WDIBPIXEL c;
+                RotatePixel_t c;
 
                 #ifdef OPT_SRC_ADDR
                 int dv = vii - srcCurrentv;
@@ -782,7 +782,7 @@ void RotateDrawWithClipAlt2
 
                 if (mergeFunc != NULL)
                 {
-                    WDIBPIXEL o = *dstCurrent;
+                    RotatePixel_t o = *dstCurrent;
                     c = mergeFunc(c, o, mergeParam);
                 }
 

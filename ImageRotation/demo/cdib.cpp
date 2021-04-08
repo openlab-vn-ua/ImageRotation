@@ -25,8 +25,7 @@ CDIB::~CDIB()
  
 //////////////////////////////////////////////////////////////////
 // Takes DC handle, creates a DIB from given location and size
-bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
-                  int iWidth, int iHeight)
+bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int iBytesPerPixel)
 {
     // Release the old DIB
     Release();
@@ -44,7 +43,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     bmi.bmiHeader.biWidth           =   iWidth;
     bmi.bmiHeader.biHeight          =   iInitHeight;
     bmi.bmiHeader.biPlanes          =   1;
-    bmi.bmiHeader.biBitCount        =   WDIBPIXEL_BITS;
+    bmi.bmiHeader.biBitCount        =   iBytesPerPixel * 8;
     bmi.bmiHeader.biCompression     =   BI_RGB;
     bmi.bmiHeader.biXPelsPerMeter   =   72;
     bmi.bmiHeader.biYPelsPerMeter   =   72;
@@ -53,7 +52,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY,
     m_iHeight = iHeight;
      
     // Each line of the DIB is always quad aligned.
-    m_iSWidth = ROUND_UP(iWidth*sizeof(WDIBPIXEL), 4); 
+    m_iSWidth = ROUND_UP(iWidth*iBytesPerPixel, 4);
  
     // Get hdc of screen for CreateDIBSection and create the DIB
     HDC hdcScreen = GetDC(NULL);

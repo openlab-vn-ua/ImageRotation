@@ -1,19 +1,19 @@
 #ifndef ROTATE_H_INCLUDED
 #define ROTATE_H_INCLUDED
 
-#ifndef WDIBPIXEL_DEFINED
-#define WDIBPIXEL_DEFINED
+#ifndef ROTATEPIXEL_T_DEFINED
+#define ROTATEPIXEL_T_DEFINED
 #include <stdint.h>
-#if WDIBPIXEL_BITS==16
-typedef uint16_t WDIBPIXEL;
-//#define WDIBPIXEL_BITS (16) 
+#if ROTATEPIXEL_T_BITS==16
+typedef uint16_t RotatePixel_t;
+//#define ROTATEPIXEL_T_BITS (16) 
 #else
-typedef uint32_t WDIBPIXEL;
-#define WDIBPIXEL_BITS (32) 
+typedef uint32_t RotatePixel_t;
+#define ROTATEPIXEL_T_BITS (32) 
 #endif
 #endif
 
-typedef WDIBPIXEL (*RotateColorMergerFunc_t)(WDIBPIXEL newColor, WDIBPIXEL oldColor, void *Param);
+typedef RotatePixel_t (*RotateColorMergerFunc_t)(RotatePixel_t newColor, RotatePixel_t oldColor, void *Param);
 
 #ifdef __cplusplus
 #define ROTATE_DEF_PARAM(val) = val
@@ -23,16 +23,16 @@ typedef WDIBPIXEL (*RotateColorMergerFunc_t)(WDIBPIXEL newColor, WDIBPIXEL oldCo
 
 ///////////////////////////////////////////////////////////////////
 void RotateWrapFill(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstRotCenterX, float fDstRotCenterY,
     float fSrcRotCenterX, float fSrcRotCenterY, 
     float fAngle, float fScale);
  
 ///////////////////////////////////////////////////////////////////
 void RotateDrawWithClip(
-    WDIBPIXEL *pDstBase, int dstW, int dstH, int dstDelta,
-    WDIBPIXEL *pSrcBase, int srcW, int srcH, int srcDelta,
+    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstRotCenterX, float fDstRotCenterY,
     float fSrcRotCenterX, float fSrcRotCenterY, 
     float fAngle, float fScale);
@@ -40,8 +40,8 @@ void RotateDrawWithClip(
 ///////////////////////////////////////////////////////////////////
 void RotateDrawWithClipAltD
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         double ox, double oy, 
         double px, double py, 
         double angle, double scale
@@ -50,8 +50,8 @@ void RotateDrawWithClipAltD
 ///////////////////////////////////////////////////////////////////
 void RotateDrawWithClipAlt
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
         float angle, float scale,
@@ -62,8 +62,8 @@ void RotateDrawWithClipAlt
 ///////////////////////////////////////////////////////////////////
 void RotateDrawWithClipAlt2
     (
-        WDIBPIXEL *dst, int dstW, int dstH, int dstDelta, 
-        WDIBPIXEL *src, int srcW, int srcH, int srcDelta,
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
         float ox, float oy, 
         float px, float py, 
         float angle, float scale,

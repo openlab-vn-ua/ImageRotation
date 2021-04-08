@@ -16,7 +16,7 @@
 // defines
 #define _MINSCALE   0.4f
 #define _MAXSCALE   5.0f
-#define SZIMAGE     "test1.bmp"
+#define SZIMAGE     "test_64x64.bmp"
  
 /////////////////////////////////////////////////////////////////
 // Globals
@@ -117,9 +117,9 @@ void Update(HDC hdc)
     // center of the source image as the points to rotate around
     // RotateDrawWithClip(
     RotateWrapFill(
-        gDibDst->m_pSrcBits, gDibDst->m_iWidth, 
+        static_cast<RotatePixel_t*>(gDibDst->m_pSrcBits), gDibDst->m_iWidth,
         gDibDst->m_iHeight, gDibDst->m_iSWidth,
-        gDibSrc->m_pSrcBits, gDibSrc->m_iWidth, 
+        static_cast<RotatePixel_t*>(gDibSrc->m_pSrcBits), gDibSrc->m_iWidth,
         gDibSrc->m_iHeight, gDibSrc->m_iSWidth,
         (float)gDibDst->m_iWidth/2, (float)gDibDst->m_iHeight/2,
         (float)gDibSrc->m_iWidth/2, (float)gDibSrc->m_iHeight/2,
@@ -175,8 +175,7 @@ BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
         if(GetObject(hbm, sizeof(BITMAP), &bm) != 0)
         {
             // Convert the bitmap into DIB of known colour depth
-            if(gDibSrc->Create(hdc, 0, 0, 
-                bm.bmWidth, bm.bmHeight))
+            if(gDibSrc->Create(hdc, 0, 0, bm.bmWidth, bm.bmHeight, sizeof(RotatePixel_t)))
             {       
                 // Start the update timer
                 SetTimer(hwnd, 0, 100, NULL);
@@ -202,7 +201,7 @@ BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
 void OnSize(HWND hwnd, UINT state, int x, int y)
 {
     // Recreate the window DIB to match the size of the window
-    gDibDst->Create(NULL, 0, 0, x, y);  
+    gDibDst->Create(NULL, 0, 0, x, y, sizeof(RotatePixel_t));
 }
 /////////////////////////////////////////////////////////////////
 BOOL OnEraseBkGnd(HWND hwnd, HDC hdc)

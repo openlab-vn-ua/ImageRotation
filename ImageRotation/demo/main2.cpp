@@ -15,7 +15,7 @@
 #define _MINSCALE   0.4f
 #define _MAXSCALE   5.0f
 
-#define SZIMAGE     "test1.bmp"
+#define SZIMAGE     "test_64x64.bmp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -155,9 +155,9 @@ bool ClipImageProc(void *(&pDstBase), int pixelDataSize, int (&dstW), int (&dstH
 /// </summary>
 /// <note> Same as ClipImageProc, except fromX, int fromY, int toX, int toY are not-references) </note>
 /// <returns>true if result is non-empty (dstW > 0 and dstH > 0)</returns>
-bool ClipImage(WDIBPIXEL *(&pDstBase), int (&dstW), int (&dstH), int dstStride, int fromX, int fromY, int toX, int toY)
+bool ClipImage(RotatePixel_t *(&pDstBase), int (&dstW), int (&dstH), int dstStride, int fromX, int fromY, int toX, int toY)
 {
-    return(ClipImageProc((void*(&))pDstBase, sizeof(WDIBPIXEL), dstW, dstH, dstStride, fromX, fromY, toX, toY));
+    return(ClipImageProc((void*(&))pDstBase, sizeof(RotatePixel_t), dstW, dstH, dstStride, fromX, fromY, toX, toY));
 }
 
 #define TEST_STEP_ANGLE_FORE()  { gdAngle += gdAngleStep; }
@@ -177,8 +177,8 @@ void Update(HDC hdc)
     ZeroMemory(gDibDst->m_pSrcBits, gDibDst->m_iSWidth * gDibDst->m_iHeight);
 
     // Prepare parameters
-    WDIBPIXEL *pDstBase = gDibDst->m_pSrcBits; int dstW = gDibDst->m_iWidth; int dstH = gDibDst->m_iHeight; int dstDelta = gDibDst->m_iSWidth;
-    WDIBPIXEL *pSrcBase = gDibSrc->m_pSrcBits; int srcW = gDibSrc->m_iWidth; int srcH = gDibSrc->m_iHeight; int srcDelta = gDibSrc->m_iSWidth;
+    RotatePixel_t *pDstBase = static_cast<RotatePixel_t*>(gDibDst->m_pSrcBits); int dstW = gDibDst->m_iWidth; int dstH = gDibDst->m_iHeight; int dstDelta = gDibDst->m_iSWidth;
+    RotatePixel_t *pSrcBase = static_cast<RotatePixel_t*>(gDibSrc->m_pSrcBits); int srcW = gDibSrc->m_iWidth; int srcH = gDibSrc->m_iHeight; int srcDelta = gDibSrc->m_iSWidth;
     float fDstCX = dstW * 0.50 / giViewZoomScale + 5; float fDstCY = dstH * 0.50 / giViewZoomScale + 30;
     float fSrcCX = srcW * 0.00 + 0; float fSrcCY = srcH * 0.50 + 0;
     float fAngle = gdAngle;
@@ -304,8 +304,7 @@ BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
         if(GetObject(hbm, sizeof(BITMAP), &bm) != 0)
         {
             // Convert the bitmap into DIB of known colour depth
-            if(gDibSrc->Create(hdc, 0, 0, 
-                bm.bmWidth, bm.bmHeight))
+            if(gDibSrc->Create(hdc, 0, 0, bm.bmWidth, bm.bmHeight, sizeof(RotatePixel_t)))
             {       
                 // Start the update timer
                 SetTimer(hwnd, 0, 100, NULL);
@@ -331,7 +330,7 @@ BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
 void OnSize(HWND hwnd, UINT state, int x, int y)
 {
     // Recreate the window DIB to match the size of the window
-    gDibDst->Create(NULL, 0, 0, x, y);  
+    gDibDst->Create(NULL, 0, 0, x, y, sizeof(RotatePixel_t));
 }
 /////////////////////////////////////////////////////////////////
 BOOL OnEraseBkGnd(HWND hwnd, HDC hdc)
