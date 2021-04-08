@@ -21,18 +21,18 @@
   <ItemGroup>
     <ClCompile Include="cdib.cpp" />
     <ClCompile Include="main2.cpp" />
-    <ClCompile Include="rotate.cpp" />
+    <ClCompile Include="src/rotate.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src/rotate.h" />
     <ClInclude Include="cdib.h" />
-    <ClInclude Include="rotate.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{0B1ACF56-9BFA-4F21-8821-DCBFD4145782}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ImageRotation</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
