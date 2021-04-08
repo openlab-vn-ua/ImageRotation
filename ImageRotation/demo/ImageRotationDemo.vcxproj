@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="../src/rotate.cpp" />
     <ClCompile Include="cdib.cpp" />
     <ClCompile Include="main2.cpp" />
-    <ClCompile Include="src/rotate.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src/rotate.h" />
+    <ClInclude Include="../src/rotate.h" />
     <ClInclude Include="cdib.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

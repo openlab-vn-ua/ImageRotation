@@ -10,7 +10,7 @@
 #include <windowsx.h>
 #include <stdio.h>
 #include "cdib.h"
-#include "src/rotate.h"
+#include "../src/rotate.h"
  
 /////////////////////////////////////////////////////////////////
 // defines
