@@ -1,6 +1,8 @@
 #ifndef ROTATE_H_INCLUDED
 #define ROTATE_H_INCLUDED
 
+#include <stdlib.h>
+
 #ifndef ROTATEPIXEL_T_DEFINED
 #define ROTATEPIXEL_T_DEFINED
 #include <stdint.h>
