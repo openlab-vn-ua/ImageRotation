@@ -9,108 +9,13 @@
 #include <stdio.h>
 #include "cdib.h"
 #include "../src/rotate.h"
- 
-/////////////////////////////////////////////////////////////////
-// defines
-#define _MINSCALE   0.4f
-#define _MAXSCALE   5.0f
-
-#define SZIMAGE     "test_64x64.bmp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-double Math_PI = M_PI; // 3.1415;
+static double Math_PI = M_PI; // 3.1415;
 
+// Utils
 /////////////////////////////////////////////////////////////////
-// Globals
-CDIB*   gDibSrc         = NULL;
-CDIB*   gDibDst         = NULL;
-float   gdScale         = 1.0 ; // _MAXSCALE;
-float   gdAngle         = 0.0*Math_PI/180.0;
-float   gdScaleDir      = 0.1f;
-float   gdAngleStep     = Math_PI/180.0;
-double  gdTicksPerSec   = 0.0;
-bool    gbTimeFunction  = false;
-bool    gbAutoMode      = false;
-int     giViewZoomScale = 5; // Initial zoom scale
- 
-/////////////////////////////////////////////////////////////////
-// Function Prototypes
-LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM) ;
- 
-/////////////////////////////////////////////////////////////////
-// WinMain
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                    LPSTR szCmdLine, int iCmdShow)
-{
- 
-    HWND        hwnd;
-    MSG         msg;    
- 
-    // Register the window class
-    WNDCLASS wndclass;
-    ZeroMemory(&wndclass, sizeof(WNDCLASS));
-    wndclass.style         = CS_HREDRAW | CS_VREDRAW;
-    wndclass.lpfnWndProc   = WndProc;
-    wndclass.hInstance     = hInstance;
-    wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wndclass.lpszClassName = __FILE__;
-    RegisterClass(&wndclass);
- 
-    // Check if we can use the high performace counter
-    // for timing the rotation function
-    LARGE_INTEGER perfreq;
-    if(QueryPerformanceFrequency(&perfreq))
-    {
-        gdTicksPerSec = (double)perfreq.LowPart;
-        gbTimeFunction = true;
-    }
-    else
-    {
-        MessageBox(NULL, 
-            "High resolution timer not available",
-            "Warning", MB_OK);
-    }
-         
-    // Create our source and destination DIB`s
-    gDibSrc = new CDIB();
-    gDibDst = new CDIB();
- 
-    if(gDibSrc && gDibDst)
-    {
-        // Create Window
-        hwnd = CreateWindow(
-           __FILE__, "Fast Bitmap Rotation", WS_OVERLAPPEDWINDOW,
-           CW_USEDEFAULT, CW_USEDEFAULT, 400, 400, 
-           NULL, NULL, hInstance, NULL);
- 
-        ShowWindow (hwnd, iCmdShow) ;
-        UpdateWindow (hwnd) ;
- 
-        while (GetMessage (&msg, NULL, 0, 0))
-        {
-            TranslateMessage (&msg) ;
-            DispatchMessage (&msg) ;
-        }       
- 
-        // cleanup DIB`s
-        delete gDibSrc;
-        delete gDibDst;
-    }
-    return msg.wParam;
-}
-/////////////////////////////////////////////////////////////////
-double GetTimer()
-{
-    if(gbTimeFunction)
-    {
-        LARGE_INTEGER time;
-        QueryPerformanceCounter(&time);
- 
-        return (double)time.QuadPart / gdTicksPerSec;
-    }
-    return 0.0;
-}
 
 /// <summary>
 /// Clips image data to region: [fromX, fromY].inclusive to (toX,toY).exclusive.
@@ -118,7 +23,7 @@ double GetTimer()
 /// Returns true if result is non-void region.
 /// </summary>
 /// <returns>true if result is non-empty (dstW > 0 and dstH > 0)</returns>
-bool ClipImageProc(void *(&pDstBase), int pixelDataSize, int (&dstW), int (&dstH), int dstStride, int &fromX, int &fromY, int &toX, int &toY)
+bool ClipImageProc(void* (&pDstBase), int pixelDataSize, int(&dstW), int(&dstH), int dstStride, int& fromX, int& fromY, int& toX, int& toY)
 {
     if (dstW <= 0) { dstW = 0; }
     if (dstH <= 0) { dstH = 0; }
@@ -143,7 +48,7 @@ bool ClipImageProc(void *(&pDstBase), int pixelDataSize, int (&dstW), int (&dstH
     dstW = toX - fromX;
     dstH = toY - fromY;
 
-    pDstBase = (void *)(((char*)pDstBase) + (fromX * pixelDataSize + fromY * dstStride));
+    pDstBase = (void*)(((char*)pDstBase) + (fromX * pixelDataSize + fromY * dstStride));
 
     return(true);
 }
@@ -155,25 +60,108 @@ bool ClipImageProc(void *(&pDstBase), int pixelDataSize, int (&dstW), int (&dstH
 /// </summary>
 /// <note> Same as ClipImageProc, except fromX, int fromY, int toX, int toY are not-references) </note>
 /// <returns>true if result is non-empty (dstW > 0 and dstH > 0)</returns>
-bool ClipImage(RotatePixel_t *(&pDstBase), int (&dstW), int (&dstH), int dstStride, int fromX, int fromY, int toX, int toY)
+bool ClipImage(RotatePixel_t* (&pDstBase), int(&dstW), int(&dstH), int dstStride, int fromX, int fromY, int toX, int toY)
 {
-    return(ClipImageProc((void*(&))pDstBase, sizeof(RotatePixel_t), dstW, dstH, dstStride, fromX, fromY, toX, toY));
+    return(ClipImageProc((void* (&))pDstBase, sizeof(RotatePixel_t), dstW, dstH, dstStride, fromX, fromY, toX, toY));
 }
-
-#define TEST_STEP_ANGLE_FORE()  { gdAngle += gdAngleStep; }
-#define TEST_STEP_ANGLE_BACK()  { gdAngle -= gdAngleStep; }
-#define TEST_STEP_SCALE_AUTO()  { if (gdScale <= _MINSCALE || gdScale >= _MAXSCALE) { gdScaleDir *= -1.0; } { gdScale += gdScaleDir*1.0f; } }
-#define TEST_STEP_SCALE_FORE()  { if (gdScale < _MAXSCALE) { gdScale += fabs(gdScaleDir)*1.0f; } }
-#define TEST_STEP_SCALE_BACK()  { if (gdScale > _MINSCALE) { gdScale -= fabs(gdScaleDir)*1.0f; } }
 
 #define COLORREF_COLOR_BLACK    RGB(0, 0, 0)
 #define COLORREF_COLOR_GOLD     RGB(0xFF, 0xD7, 0x00)
 
+// Hi speed timer
 /////////////////////////////////////////////////////////////////
-void Update(HDC hdc)
+
+static bool    gbTimeFunction = false;
+static double  gdTicksPerSec = 0.0;
+
+static bool TimingInit()
 {
-    double dStartT = GetTimer();
- 
+    // Check if we can use the high performace counter
+    // for timing the rotation function
+    LARGE_INTEGER perfreq;
+    if (QueryPerformanceFrequency(&perfreq))
+    {
+        gdTicksPerSec = (double)perfreq.LowPart;
+        gbTimeFunction = true;
+    }
+    else
+    {
+        gbTimeFunction = false;
+    }
+
+    return(gbTimeFunction);
+}
+
+static bool TimingIsAvailable() { return gbTimeFunction; }
+
+// Returns seconds since app start 
+static double TimingGetValue() 
+{
+    if (gbTimeFunction)
+    {
+        LARGE_INTEGER time;
+        QueryPerformanceCounter(&time);
+
+        return (double)time.QuadPart / gdTicksPerSec;
+    }
+    return 0.0;
+}
+
+
+// Defines
+/////////////////////////////////////////////////////////////////
+
+#define SZIMAGE     "test_64x64.bmp"
+
+// Global test state
+/////////////////////////////////////////////////////////////////
+
+CDIB*   gDibSrc         = NULL;
+CDIB*   gDibDst         = NULL;
+
+static const char* FUNC_NAME_RotateWrapFill = "RotateWrapFill";
+static const char* FUNC_NAME_RotateDrawClip1 = "RotateDrawClip1";
+static const char* FUNC_NAME_RotateDrawClipExt1 = "RotateDrawClipExt";
+static const char* FUNC_NAME_RotateDrawClipExt1D = "RotateDrawClipExt1D";
+static const char* FUNC_NAME_RotateDrawClipExt2 = "RotateDrawClipExt2";
+
+static const char* FUNC_NAMES[] = { FUNC_NAME_RotateWrapFill, FUNC_NAME_RotateDrawClip1, FUNC_NAME_RotateDrawClipExt1, FUNC_NAME_RotateDrawClipExt1D, FUNC_NAME_RotateDrawClipExt2 };
+static const int   FUNC_NAMES_COUNT = sizeof(FUNC_NAMES) / sizeof(FUNC_NAMES[0]);
+
+#define GSCALE_MIN      0.4f
+#define GSCALE_MAX      5.0f
+
+float   gdScale         = 1.0 ;
+float   gdAngle         = 0.0*Math_PI/180.0;
+float   gdScaleDir      = 0.1f;
+float   gdAngleStep     = Math_PI/180.0;
+bool    gbAutoMode      = false;
+int     giViewZoomScale = 5; // Initial zoom scale
+int     giFuncNameIndex = 1; // FUNC_NAME_RotateDrawClip
+
+bool is_float_equal(float a, float b, float eps = 0.0001) { float d = a - b; if (d < 0) { d = -d; } return d <= eps; }
+
+float norm_angle(float angle)
+{
+    if (is_float_equal(angle, 0)) { return 0; }
+    if (is_float_equal(angle, Math_PI)) { return Math_PI; }
+    if (is_float_equal(angle, 3*Math_PI / 2)) { return Math_PI / 2; }
+    if (is_float_equal(angle, 3*Math_PI / 2)) { return 3*Math_PI / 2; }
+    return angle;
+}
+
+#define GSTATE_STEP_ANGLE_FORE()  { gdAngle += gdAngleStep; gdAngle = norm_angle(gdAngle); }
+#define GSTATE_STEP_ANGLE_BACK()  { gdAngle -= gdAngleStep; gdAngle = norm_angle(gdAngle); }
+#define GSTATE_STEP_SCALE_AUTO()  { if (gdScale <= GSCALE_MIN || gdScale >= GSCALE_MAX) { gdScaleDir *= -1.0; } { gdScale += gdScaleDir*1.0f; } }
+#define GSTATE_STEP_SCALE_FORE()  { if (gdScale < GSCALE_MAX) { gdScale += fabs(gdScaleDir)*1.0f; } }
+#define GSTATE_STEP_SCALE_BACK()  { if (gdScale > GSCALE_MIN) { gdScale -= fabs(gdScaleDir)*1.0f; } }
+#define GSTATE_STEP_FUNC_NAME()   { giFuncNameIndex++; giFuncNameIndex %= FUNC_NAMES_COUNT; }
+#define GSTATE_RESET()            { gdScale = 1.0; gdAngle = 0.0 * Math_PI / 180.0; gdScaleDir = 0.1f; }
+
+/////////////////////////////////////////////////////////////////
+
+static void Update(HDC hdc)
+{
     ZeroMemory(gDibDst->m_pSrcBits, gDibDst->m_iSWidth * gDibDst->m_iHeight);
 
     // Prepare parameters
@@ -189,27 +177,84 @@ void Update(HDC hdc)
 
     //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190); // work this way also, so you may clip region before draw
 
-    int TEST_COUNT = 10;
+    int iRotCount = 500;
 
-    for (int i = 0; i < TEST_COUNT; i++)
+    const char* FuncName = FUNC_NAMES[giFuncNameIndex];
+
+    if (FuncName == FUNC_NAME_RotateDrawClip1)
     {
-        // Call Rotate routine
-        // center of the source image as the points to rotate around
-        RotateDrawWithClipAlt2
-        //RotateDrawWithClipAltD
-        //RotateDrawWithClipAlt
-        //RotateDrawWithClip
-        //RotateWrapFill
-        (
-            pDstBase, dstW, dstH, dstDelta,
-            pSrcBase, srcW, srcH, srcDelta,
-            fDstCX, fDstCY,
-            fSrcCX, fSrcCY, 
-            fAngle, fScale
-        );
+        iRotCount = iRotCount / 10;
+    }
+    else if (FuncName == FUNC_NAME_RotateWrapFill)
+    {
+        iRotCount = iRotCount / 20;
+    }
+
+    double dRotBeginT = TimingGetValue();
+
+    for (int i = 0; i < iRotCount; i++)
+    {
+
+        if (FuncName == FUNC_NAME_RotateDrawClip1)
+        {
+            RotateDrawClip1
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
+        else if (FuncName == FUNC_NAME_RotateDrawClipExt1)
+        {
+            RotateDrawClipExt1
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
+        else if (FuncName == FUNC_NAME_RotateDrawClipExt1D)
+        {
+            RotateDrawClipExt1D
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
+        else if (FuncName == FUNC_NAME_RotateDrawClipExt2)
+        {
+            RotateDrawClipExt2
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
+        else
+        {
+            RotateDrawFill
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
     }
      
-    double dUpdateT = GetTimer();
+    double dRotEndT = TimingGetValue();
+
+    double dUpdateBeginT = TimingGetValue();
 
     // Copy our rotated image to the screen (possible zoomed)
 
@@ -254,10 +299,10 @@ void Update(HDC hdc)
         SetPixel(hdc, cx, cy, COLORREF_COLOR_GOLD); // Draw center
     }
 
-    double dRenderT = GetTimer();
+    double dUpdateEndT = TimingGetValue();
  
     // Print function timing satistics
-    if(gbTimeFunction)
+    if(TimingIsAvailable())
     {
         int text_y_pos = 5;
 
@@ -269,12 +314,12 @@ void Update(HDC hdc)
 
         char szBuffer[256];
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Rotate took %7.3fms (~%7.2ffps)",
-             (dUpdateT-dStartT) * 1000.0 / TEST_COUNT, 1.0 / ((dUpdateT-dStartT) / TEST_COUNT)));
+             sprintf_s(szBuffer, "%s Rotate took %7.3fms (~%7.2ffps)",
+             FuncName, (dRotEndT-dRotBeginT) * 1000.0 / iRotCount, 1.0 / ((dRotEndT-dRotBeginT) / iRotCount)));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Render took %7.3fms (~%7.2ffps) [VIEW ZOOM: %d]",
-             (dRenderT-dUpdateT) * 1000, 1.0 / (dRenderT-dUpdateT), giViewZoomScale));
+             (dUpdateEndT-dUpdateBeginT) * 1000, 1.0 / (dUpdateEndT-dUpdateBeginT), giViewZoomScale));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Angle %3.6frad %4.1fdeg Scale %3.6f src X=%3.1f Y=%3.1f",
@@ -284,8 +329,8 @@ void Update(HDC hdc)
              sprintf_s(szBuffer, "Left/Right = Rotate, PgUp/PgDn = Scale+/-, A = Auto on/off, r=Reset"));
     }
 }
-////////////////////////////////////////////////////////////////
-BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
+
+static BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
 {   
     BOOL bSuccess = FALSE;
  
@@ -326,20 +371,20 @@ BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
     }
     return bSuccess;
 }
-/////////////////////////////////////////////////////////////////
-void OnSize(HWND hwnd, UINT state, int x, int y)
+
+static void OnSize(HWND hwnd, UINT state, int x, int y)
 {
     // Recreate the window DIB to match the size of the window
     gDibDst->Create(NULL, 0, 0, x, y, sizeof(RotatePixel_t));
 }
-/////////////////////////////////////////////////////////////////
-BOOL OnEraseBkGnd(HWND hwnd, HDC hdc)
+
+static BOOL OnEraseBkGnd(HWND hwnd, HDC hdc)
 {   
     // clearing the bk results in tears.
     return TRUE;
 }
-/////////////////////////////////////////////////////////////////
-void OnPaint(HWND hwnd)
+
+static void OnPaint(HWND hwnd)
 {
     HDC hdc;
     PAINTSTRUCT ps;
@@ -349,51 +394,50 @@ void OnPaint(HWND hwnd)
     EndPaint (hwnd, &ps) ;
 }
 
-void DoRedraw(HWND hwnd)
+static void DoRedraw(HWND hwnd)
 {
     HDC hdc = GetDC(hwnd);
     Update(hdc);
     ReleaseDC(hwnd, hdc);
 }
 
-/////////////////////////////////////////////////////////////////
-BOOL OnTimer(HWND hwnd, UINT id)
+static BOOL OnTimer(HWND hwnd, UINT id)
 {   
     if (gbAutoMode)
     {
-        TEST_STEP_SCALE_AUTO();
+        GSTATE_STEP_SCALE_AUTO();
         DoRedraw(hwnd);
     }
     return TRUE;
 }
 
-void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
+static void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
 {
     switch (vk)
     {
         case(VK_ADD):
         case(VK_PRIOR): // PgUp
         {
-            TEST_STEP_SCALE_FORE();
+            GSTATE_STEP_SCALE_FORE();
             DoRedraw(hwnd);
         } break;
 
         case(VK_SUBTRACT):
         case(VK_NEXT): // PgDn
         {
-            TEST_STEP_SCALE_BACK();
+            GSTATE_STEP_SCALE_BACK();
             DoRedraw(hwnd);
         } break;
 
         case(VK_LEFT):
         {
-            TEST_STEP_ANGLE_BACK();
+            GSTATE_STEP_ANGLE_BACK();
             DoRedraw(hwnd);
         } break;
 
         case(VK_RIGHT):
         {
-            TEST_STEP_ANGLE_FORE();
+            GSTATE_STEP_ANGLE_FORE();
             DoRedraw(hwnd);
         } break;
 
@@ -405,9 +449,13 @@ void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
 
         case('R'):
         {
-            gdScale    = 1.0 ; // _MAXSCALE;
-            gdAngle    = 0.0*Math_PI/180.0;
-            gdScaleDir = 0.1f;
+            GSTATE_RESET();
+            DoRedraw(hwnd);
+        } break;
+
+        case('F'):
+        {
+            GSTATE_STEP_FUNC_NAME();
             DoRedraw(hwnd);
         } break;
 
@@ -418,14 +466,14 @@ void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
     }
 }
 
-/////////////////////////////////////////////////////////////////
-void OnDestroy(HWND hwnd)
+static void OnDestroy(HWND hwnd)
 {
     PostQuitMessage(0);
 }
+
 /////////////////////////////////////////////////////////////////
-LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, 
-                            WPARAM wParam, LPARAM lParam)
+
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (iMsg)
     {
@@ -440,5 +488,57 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg,
  
     return DefWindowProc (hwnd, iMsg, wParam, lParam) ;
 }
+
 /////////////////////////////////////////////////////////////////
-//End of File
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLine, int iCmdShow)
+{
+
+    HWND        hwnd;
+    MSG         msg;
+
+    // Register the window class
+    WNDCLASS wndclass;
+    ZeroMemory(&wndclass, sizeof(WNDCLASS));
+    wndclass.style = CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpfnWndProc = WndProc;
+    wndclass.hInstance = hInstance;
+    wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wndclass.lpszClassName = __FILE__;
+    RegisterClass(&wndclass);
+
+    if (!TimingInit())
+    {
+        MessageBox(NULL,
+            "High resolution timer not available",
+            "Warning", MB_OK);
+    }
+
+    // Create our source and destination DIB`s
+    gDibSrc = new CDIB();
+    gDibDst = new CDIB();
+
+    if (gDibSrc && gDibDst)
+    {
+        // Create Window
+        hwnd = CreateWindow(
+            __FILE__, "Fast Bitmap Rotation", WS_OVERLAPPEDWINDOW,
+            CW_USEDEFAULT, CW_USEDEFAULT, 400, 400,
+            NULL, NULL, hInstance, NULL);
+
+        ShowWindow(hwnd, iCmdShow);
+        UpdateWindow(hwnd);
+
+        while (GetMessage(&msg, NULL, 0, 0))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        // cleanup DIB`s
+        delete gDibSrc;
+        delete gDibDst;
+    }
+    return msg.wParam;
+}
+

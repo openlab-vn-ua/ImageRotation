@@ -115,8 +115,8 @@ void Update(HDC hdc)
  
     // Call RotateWrapFill routine, using center of the window and the
     // center of the source image as the points to rotate around
-    // RotateDrawWithClip(
-    RotateWrapFill(
+    // RotateDrawClip(
+    RotateDrawFill(
         static_cast<RotatePixel_t*>(gDibDst->m_pSrcBits), gDibDst->m_iWidth,
         gDibDst->m_iHeight, gDibDst->m_iSWidth,
         static_cast<RotatePixel_t*>(gDibSrc->m_pSrcBits), gDibSrc->m_iWidth,

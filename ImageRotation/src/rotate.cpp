@@ -13,29 +13,90 @@ static bool IsExp2(unsigned int value)
     return (value > 0 && (value & (value - 1)) == 0);
 }
 
-static // Foreward declaraion of faster func when srcW & srcH is power of 2
-void RotateWrapFillFastSrcSizeExp2(
+/// <summary>
+/// Internal: Same as RotateDrawFill, but dimensions of the source image must be a power of two.
+/// </summary>
+static
+void RotateDrawFillFastSrcSizeExp2(
     RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
     RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY,
-    float fAngle, float fScale);
+    float fAngle, float fScale)
+{
+    // IMPORTANT: This version assumes the dimensions of the source image to be a power of two.
 
-/// <summary>
-/// Rotates source image and writes it to the destination, filling all the target.
-/// This version takes any dimension source bitmap and wraps.
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// </summary>
-void RotateWrapFill(
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
+    srcDelta /= sizeof(RotatePixel_t);
+    dstDelta /= sizeof(RotatePixel_t);
+
+    float duCol = (float)sin(-fAngle) * (1.0f / fScale);
+    float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
+    float duRow = dvCol;
+    float dvRow = -duCol;
+
+    float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
+    float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
+
+    float rowu = startingu;
+    float rowv = startingv;
+
+    for(int y = 0; y < dstH; y++)
+    {
+        float u = rowu;
+        float v = rowv;
+
+        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
+
+        for(int x = 0; x < dstW ; x++)
+        {
+            #if DEBUG_DRAW
+            if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
+            {
+                *pDst++ = DEBUG_MARK_COLOR;
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
+            int sx = (int)u;
+            int sy = (int)v;
+
+            // Negative u/v adjustement
+
+            if (u < 0) { sx--; }
+            if (v < 0) { sy--; }
+
+            sx &= (srcW-1);
+            sy &= (srcH-1);
+
+            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
+
+            *pDst++ = *pSrc++;
+
+            u += duRow;
+            v += dvRow;
+        }
+
+        rowu += duCol;
+        rowv += dvCol;
+    }
+}
+
+void RotateDrawFill(
     RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
     RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
     float fSrcCX, float fSrcCY, 
     float fAngle, float fScale)
 {
-    if (IsExp2(srcW) && IsExp2(srcH))
+    // This version takes any dimension source bitmap and wraps.
+    if (0 && IsExp2(srcW) && IsExp2(srcH))
     {
-        RotateWrapFillFastSrcSizeExp2
+        RotateDrawFillFastSrcSizeExp2
         (
             pDstBase, dstW,dstH,dstDelta,
             pSrcBase,srcW, srcH, srcDelta,
@@ -123,89 +184,9 @@ void RotateWrapFill(
     }
 }
 
-/// <summary>
-/// Rotates source image and writes it to the destination, filling all the target.
-/// This version takes any dimension source bitmap and wraps.
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// IMPORTANT: This version assumes the dimensions of the source image to be a power of two.
-/// </summary>
-static
-void RotateWrapFillFastSrcSizeExp2(
-    RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
-    RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
-    float fDstCX, float fDstCY,
-    float fSrcCX, float fSrcCY,
-    float fAngle, float fScale)
-{
-    if (dstW <= 0) { return; }
-    if (dstH <= 0) { return; }
-
-    srcDelta /= sizeof(RotatePixel_t);
-    dstDelta /= sizeof(RotatePixel_t);
-
-    float duCol = (float)sin(-fAngle) * (1.0f / fScale);
-    float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
-    float duRow = dvCol;
-    float dvRow = -duCol;
-
-    float startingu = fSrcCX - (fDstCX * dvCol + fDstCY * duCol);
-    float startingv = fSrcCY - (fDstCX * dvRow + fDstCY * duRow);
-
-    float rowu = startingu;
-    float rowv = startingv;
-
-    for(int y = 0; y < dstH; y++)
-    {
-        float u = rowu;
-        float v = rowv;
-
-        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
-
-        for(int x = 0; x < dstW ; x++)
-        {
-            #if DEBUG_DRAW
-            if ((int(u) == int(fSrcCX)) && (int(v) == int(fSrcCY)))
-            {
-                *pDst++ = DEBUG_MARK_COLOR;
-                u += duRow;
-                v += dvRow;
-                continue;
-            }
-            #endif
-
-            int sx = (int)u;
-            int sy = (int)v;
-
-            // Negative u/v adjustement
-
-            if (u < 0) { sx--; }
-            if (v < 0) { sy--; }
-
-            sx &= (srcW-1);
-            sy &= (srcH-1);
-
-            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
-
-            *pDst++ = *pSrc++;
-
-            u += duRow;
-            v += dvRow;
-        }
-
-        rowu += duCol;
-        rowv += dvCol;
-    }
-}
-
 //#define VOID_COLOR 0
 
-/// <summary>
-/// Rotates source image and writes it to the destination.
-/// Nowrapping clipping version.
-/// Uncovered parts of target is kept as it was
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// </summary>
-void RotateDrawWithClip(
+void RotateDrawClip1(
     RotatePixel_t *pDstBase, int dstW, int dstH, int dstDelta,
     RotatePixel_t *pSrcBase, int srcW, int srcH, int srcDelta,
     float fDstCX, float fDstCY,
@@ -279,145 +260,7 @@ void RotateDrawWithClip(
 #define BM_GET(src,stride,x,y) ((RotatePixel_t *)(((char*)src) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0]
 #define BM_SET(dst,stride,x,y,c) ((RotatePixel_t *)(((char*)dst) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0] = (c)
 
-/// <summary>
-/// Rotates source image and writes it to the destination.
-/// Nowrapping clipping version (double prec) [somewat computationaly unstable]
-/// Optimised version, only updated region at target affected
-/// px, py = pivot point in source
-/// ox, oy = place where pivot point will be located in target
-/// Uncovered parts of target is kept as it was
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// </summary>
-void RotateDrawWithClipAltD
-    (
-        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
-        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
-        double ox, double oy, 
-        double px, double py, 
-        double angle, double scale
-    )
-{
-    // Optimisation based on:
-    // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
-
-    angle = -angle; // to made rules consistent with RotateDrawWithClip
-
-    if (dstW <= 0) { return; }
-    if (dstH <= 0) { return; }
-
-    int x,y;
-
-    // fill min/max reverced (invalid) values at first
-    int minx = dstW, miny = dstH;
-    int maxx = 0, maxy = 0;
-
-    double sinAngle = sin(angle);
-    double cosAngle = cos(angle);
-
-    double dx, dy;
-    // Compute the position of where each corner on the source bitmap
-    // will be on the destination to get a bounding box for scanning
-    dx = -cosAngle * px * scale + sinAngle * py * scale + ox;
-    dy = -sinAngle * px * scale - cosAngle * py * scale + oy;
-    if(dx < minx) { minx = dx; }
-    if(dx > maxx) { maxx = dx; }
-    if(dy < miny) { miny = dy; }
-    if(dy > maxy) { maxy = dy; }
-
-    dx = cosAngle * (srcW - px) * scale + sinAngle * py * scale + ox;
-    dy = sinAngle * (srcW - px) * scale - cosAngle * py * scale + oy;
-    if(dx < minx) { minx = dx; }
-    if(dx > maxx) { maxx = dx; }
-    if(dy < miny) { miny = dy; }
-    if(dy > maxy) { maxy = dy; }
-
-    dx = cosAngle * (srcW - px) * scale - sinAngle * (srcH - py) * scale + ox;
-    dy = sinAngle * (srcW - px) * scale + cosAngle * (srcH - py) * scale + oy;
-    if(dx < minx) { minx = dx; }
-    if(dx > maxx) { maxx = dx; }
-    if(dy < miny) { miny = dy; }
-    if(dy > maxy) { maxy = dy; }
-
-    dx = -cosAngle * px * scale - sinAngle * (srcH - py) * scale + ox;
-    dy = -sinAngle * px * scale + cosAngle * (srcH - py) * scale + oy;
-    if(dx < minx) { minx = dx; }
-    if(dx > maxx) { maxx = dx; }
-    if(dy < miny) { miny = dy; }
-    if(dy > maxy) { maxy = dy; }
-
-    // Clipping
-    if(minx < 0) { minx = 0; }
-    if(maxx > dstW - 1) { maxx = dstW - 1; }
-    if(miny < 0) { miny = 0; }
-    if(maxy > dstH - 1) { maxy = dstH - 1; }
-
-    #if DEBUG_DRAW
-    //minx = 0;
-    //miny = 0;
-    //maxx = dstW-1;
-    //maxy = dstH-1;
-    #endif
-
-    double dvCol = cos(angle) / scale;
-    double duCol = sin(angle) / scale;
-
-    double duRow = dvCol;
-    double dvRow = -duCol;
-
-    double startu = px - (ox * dvCol + oy * duCol);
-    double startv = py - (ox * dvRow + oy * duRow);
-
-    double rowu = startu + miny * duCol;
-    double rowv = startv + miny * dvCol;
-
-    for(y = miny; y <= maxy; y++)
-    {
-        double u = rowu + minx * duRow;
-        double v = rowv + minx * dvRow;
-
-        for(x = minx; x <= maxx; x++)
-        {
-            #if DEBUG_DRAW
-            if ((int(u) == int(px)) && (int(v) == int(py)))
-            {
-                BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
-                u += duRow;
-                v += dvRow;
-                continue;
-            }
-            #endif
-
-            if(u >= 0 && u < srcW && v >= 0 && v < srcH)
-            {
-                RotatePixel_t c = BM_GET(src, srcDelta, (int)u, (int)v);
-                BM_SET(dst, dstDelta, x, y, c);
-            }
-            else
-            {
-                #if DEBUG_DRAW
-                BM_SET(dst, dstDelta, x, y, DEBUG_BACK_COLOR);
-                #endif
-            }
-
-            u += duRow;
-            v += dvRow;
-        }
-
-        rowu += duCol;
-        rowv += dvCol;
-    }
-}
-
-/// <summary>
-/// Rotates source image and writes it to the destination.
-/// Nowrapping clipping version (single float version)
-/// Optimised version, only updated region at target affected
-/// px, py = pivot point in source
-/// ox, oy = place where pivot point will be located in target
-/// Uncovered parts of target is kept as it was
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// </summary>
-void RotateDrawWithClipAlt
+void RotateDrawClipExt1
     (
         RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
         RotatePixel_t *src, int srcW, int srcH, int srcDelta,
@@ -430,6 +273,10 @@ void RotateDrawWithClipAlt
 {
     // Optimisation based on:
     // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
+
+    // Same as RotateDrawWithClipAltD but uses float [somehow more stable]
+    // px, py = pivot point in source
+    // ox, oy = place where pivot point will be located in target
 
     angle = -angle; // to made rules consistent with RotateDrawWithClip
 
@@ -546,18 +393,142 @@ void RotateDrawWithClipAlt
     }
 }
 
+void RotateDrawClipExt1D
+    (
+        RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
+        RotatePixel_t *src, int srcW, int srcH, int srcDelta,
+        double ox, double oy, 
+        double px, double py, 
+        double angle, double scale,
+        RotateColorMergerFunc_t mergeFunc,
+        void* mergeParam
+    )
+{
+    // Optimisation based on:
+    // https://github.com/wernsey/bitmap/blob/master/bmp.cpp
+
+    // Same as RotateDrawWithClipAlt but uses double [somewhat computationaly unstable]
+    // px, py = pivot point in source
+    // ox, oy = place where pivot point will be located in target
+
+    angle = -angle; // to made rules consistent with RotateDrawWithClip
+
+    if (dstW <= 0) { return; }
+    if (dstH <= 0) { return; }
+
+    int x,y;
+
+    // fill min/max reverced (invalid) values at first
+    int minx = dstW, miny = dstH;
+    int maxx = 0, maxy = 0;
+
+    double sinAngle = sin(angle);
+    double cosAngle = cos(angle);
+
+    double dx, dy;
+    // Compute the position of where each corner on the source bitmap
+    // will be on the destination to get a bounding box for scanning
+    dx = -cosAngle * px * scale + sinAngle * py * scale + ox;
+    dy = -sinAngle * px * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale + sinAngle * py * scale + ox;
+    dy = sinAngle * (srcW - px) * scale - cosAngle * py * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = cosAngle * (srcW - px) * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = sinAngle * (srcW - px) * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    dx = -cosAngle * px * scale - sinAngle * (srcH - py) * scale + ox;
+    dy = -sinAngle * px * scale + cosAngle * (srcH - py) * scale + oy;
+    if(dx < minx) { minx = dx; }
+    if(dx > maxx) { maxx = dx; }
+    if(dy < miny) { miny = dy; }
+    if(dy > maxy) { maxy = dy; }
+
+    // Clipping
+    if(minx < 0) { minx = 0; }
+    if(maxx > dstW - 1) { maxx = dstW - 1; }
+    if(miny < 0) { miny = 0; }
+    if(maxy > dstH - 1) { maxy = dstH - 1; }
+
+    #if DEBUG_DRAW
+    //minx = 0;
+    //miny = 0;
+    //maxx = dstW-1;
+    //maxy = dstH-1;
+    #endif
+
+    double dvCol = cos(angle) / scale;
+    double duCol = sin(angle) / scale;
+
+    double duRow = dvCol;
+    double dvRow = -duCol;
+
+    double startu = px - (ox * dvCol + oy * duCol);
+    double startv = py - (ox * dvRow + oy * duRow);
+
+    double rowu = startu + miny * duCol;
+    double rowv = startv + miny * dvCol;
+
+    for(y = miny; y <= maxy; y++)
+    {
+        double u = rowu + minx * duRow;
+        double v = rowv + minx * dvRow;
+
+        for(x = minx; x <= maxx; x++)
+        {
+            #if DEBUG_DRAW
+            if ((int(u) == int(px)) && (int(v) == int(py)))
+            {
+                BM_SET(dst, dstDelta, x, y, DEBUG_MARK_COLOR);
+                u += duRow;
+                v += dvRow;
+                continue;
+            }
+            #endif
+
+            if(u >= 0 && u < srcW && v >= 0 && v < srcH)
+            {
+                RotatePixel_t c = BM_GET(src, srcDelta, (int)u, (int)v);
+
+                if (mergeFunc != NULL)
+                {
+                    RotatePixel_t o = BM_GET(dst, dstDelta, x, y);
+                    c = mergeFunc(c, o, mergeParam);
+                }
+
+                BM_SET(dst, dstDelta, x, y, c);
+            }
+            else
+            {
+                #if DEBUG_DRAW
+                BM_SET(dst, dstDelta, x, y, DEBUG_BACK_COLOR);
+                #endif
+            }
+
+            u += duRow;
+            v += dvRow;
+        }
+
+        rowu += duCol;
+        rowv += dvCol;
+    }
+}
+
 #define BM_DATA_ADD_OFS(src,offset) ((RotatePixel_t *)(((char*)src) + (offset)))
 
-/// <summary>
-/// Rotates source image and writes it to the destination.
-/// Nowrapping clipping version
-/// Optimised version, only updated region at target affected (integer math)
-/// px, py = pivot point in source
-/// ox, oy = place where pivot point will be located in target
-/// Uncovered parts of target is kept as it was
-/// fAngle > 0 = (CW:for bottom-up bmp, CCW for top-bottom bmp)
-/// </summary>
-void RotateDrawWithClipAlt2
+void RotateDrawClipExt2
     (
         RotatePixel_t *dst, int dstW, int dstH, int dstDelta, 
         RotatePixel_t *src, int srcW, int srcH, int srcDelta,
@@ -833,3 +804,47 @@ void RotateDrawWithClipAlt2
     #endif
 }
 
+// External default functions
+// --------------------------------------------------------
+
+void RotateDrawClip
+(
+    RotatePixel_t* pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t* pSrcBase, int srcW, int srcH, int srcDelta,
+    float fDstRotCenterX, float fDstRotCenterY,
+    float fSrcRotCenterX, float fSrcRotCenterY,
+    float fAngle, float fScale
+)
+{
+    RotateDrawClipExt2
+    (
+        pDstBase, dstW, dstH, dstDelta,
+        pSrcBase, srcW, srcH, srcDelta,
+        fDstRotCenterX, fDstRotCenterY,
+        fSrcRotCenterX, fSrcRotCenterY,
+        fAngle, fScale
+    );
+}
+
+void RotateDrawClipExt
+(
+    RotatePixel_t* pDstBase, int dstW, int dstH, int dstDelta,
+    RotatePixel_t* pSrcBase, int srcW, int srcH, int srcDelta,
+    float fDstRotCenterX, float fDstRotCenterY,
+    float fSrcRotCenterX, float fSrcRotCenterY,
+    float fAngle, float fScale,
+    RotateColorMergerFunc_t mergeFunc,
+    void* mergeParam
+)
+{
+    RotateDrawClipExt2
+    (
+        pDstBase, dstW, dstH, dstDelta,
+        pSrcBase, srcW, srcH, srcDelta,
+        fDstRotCenterX, fDstRotCenterY,
+        fSrcRotCenterX, fSrcRotCenterY,
+        fAngle, fScale,
+        mergeFunc,
+        mergeParam
+    );
+}
