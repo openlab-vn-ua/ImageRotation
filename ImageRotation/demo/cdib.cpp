@@ -34,7 +34,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int
  
     // fill in the BITMAPINFO structure
     //BITMAPINFO bmi;
-    ZeroMemory(&m_bmi, sizeof(BITMAPINFO));
+    ZeroMemory(&m_bmi, sizeof(m_bmi));
     m_bmi.bmiHeader.biSize            =   sizeof(BITMAPINFOHEADER);
     m_bmi.bmiHeader.biWidth           =   iWidth;
     m_bmi.bmiHeader.biHeight          =   iInitHeight;
