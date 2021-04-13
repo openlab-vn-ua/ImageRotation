@@ -111,7 +111,8 @@ static double TimingGetValue()
 // Defines
 /////////////////////////////////////////////////////////////////
 
-#define SZIMAGE     "test_64x64.bmp"
+#define SZIMAGE_1  "test_64x64.bmp"
+#define SZIMAGE_2  "test_71x71.bmp"
 
 // Global test state
 /////////////////////////////////////////////////////////////////
@@ -128,6 +129,9 @@ static const char* FUNC_NAME_RotateDrawClipExt2 = "RotateDrawClipExt2";
 static const char* FUNC_NAMES[] = { FUNC_NAME_RotateWrapFill, FUNC_NAME_RotateDrawClip1, FUNC_NAME_RotateDrawClipExt1, FUNC_NAME_RotateDrawClipExt1D, FUNC_NAME_RotateDrawClipExt2 };
 static const int   FUNC_NAMES_COUNT = sizeof(FUNC_NAMES) / sizeof(FUNC_NAMES[0]);
 
+static const char* IMAGE_NAMES[] = { SZIMAGE_1, SZIMAGE_2 };
+static const int   IMAGE_NAMES_COUNT = sizeof(IMAGE_NAMES) / sizeof(IMAGE_NAMES[0]);
+
 #define GSCALE_MIN      0.4f
 #define GSCALE_MAX      5.0f
 
@@ -138,6 +142,7 @@ float   gdAngleStep     = Math_PI/180.0;
 bool    gbAutoMode      = false;
 int     giViewZoomScale = 5; // Initial zoom scale
 int     giFuncNameIndex = 1; // FUNC_NAME_RotateDrawClip
+int     giImageNameIndex= 0; // SZIMAGE_1
 
 bool is_float_equal(float a, float b, float eps = 0.0001) { float d = a - b; if (d < 0) { d = -d; } return d <= eps; }
 
@@ -156,6 +161,7 @@ float norm_angle(float angle)
 #define GSTATE_STEP_SCALE_FORE()  { if (gdScale < GSCALE_MAX) { gdScale += fabs(gdScaleDir)*1.0f; } }
 #define GSTATE_STEP_SCALE_BACK()  { if (gdScale > GSCALE_MIN) { gdScale -= fabs(gdScaleDir)*1.0f; } }
 #define GSTATE_STEP_FUNC_NAME()   { giFuncNameIndex++; giFuncNameIndex %= FUNC_NAMES_COUNT; }
+#define GSTATE_STEP_IMAGE_NAME()  { giImageNameIndex++; giImageNameIndex %= IMAGE_NAMES_COUNT; gDibSrc->Load(IMAGE_NAMES[giImageNameIndex], sizeof(RotatePixel_t)); }
 #define GSTATE_RESET()            { gdScale = 1.0; gdAngle = 0.0 * Math_PI / 180.0; gdScaleDir = 0.1f; }
 
 /////////////////////////////////////////////////////////////////
@@ -326,42 +332,19 @@ static void Update(HDC hdc)
              (float)gdAngle, (float)(gdAngle/Math_PI*180.0), (float)gdScale, (float) fSrcCX, (float) fSrcCY));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Left/Right = Rotate, PgUp/PgDn = Scale+/-, A = Auto on/off, r=Reset"));
+             sprintf_s(szBuffer, "Left/Right=Rotate, PgUp/PgDn=Scale+/-, A=Auto(on/off), r=Reset, f=Func, i=Image"));
     }
 }
 
 static BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
-{   
-    BOOL bSuccess = FALSE;
- 
-    // Load test bitmap
-    HBITMAP hbm = (HBITMAP)LoadImage(NULL, SZIMAGE, IMAGE_BITMAP,
-                                     0, 0, LR_LOADFROMFILE);
- 
-    if(hbm)
+{
+    const char* SZIMAGE = IMAGE_NAMES[giImageNameIndex];
+
+    BOOL bSuccess = gDibSrc->Load(SZIMAGE, sizeof(RotatePixel_t));
+    if (bSuccess)
     {
-        // Map the bitmap into a dc
-        HDC hdc = CreateCompatibleDC(NULL);
-        HBITMAP hbmOld = (HBITMAP)SelectObject(hdc, hbm);
-         
-        // Get info about this bitmap       
-        BITMAP bm;      
-        if(GetObject(hbm, sizeof(BITMAP), &bm) != 0)
-        {
-            // Convert the bitmap into DIB of known colour depth
-            if(gDibSrc->Create(hdc, 0, 0, bm.bmWidth, bm.bmHeight, sizeof(RotatePixel_t)))
-            {       
-                // Start the update timer
-                SetTimer(hwnd, 0, 100, NULL);
-                bSuccess = TRUE;
-            }
-             
-            // cleanup hdc
-            SelectObject(hdc, hbmOld);
-            DeleteDC(hdc);
-        }
-        // delete the loaded image
-        DeleteObject(hbm);
+        // Start the update timer
+        SetTimer(hwnd, 0, 100, NULL);
     }   
     else
     {
@@ -369,6 +352,7 @@ static BOOL OnCreate(HWND hwnd, CREATESTRUCT FAR* lpCreateStruct)
         wsprintf(szError, "Error loading image %s", SZIMAGE);
         MessageBox(hwnd, szError, "oops", MB_OK);
     }
+
     return bSuccess;
 }
 
@@ -456,6 +440,12 @@ static void OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags)
         case('F'):
         {
             GSTATE_STEP_FUNC_NAME();
+            DoRedraw(hwnd);
+        } break;
+
+        case('I'):
+        {
+            GSTATE_STEP_IMAGE_NAME();
             DoRedraw(hwnd);
         } break;
 

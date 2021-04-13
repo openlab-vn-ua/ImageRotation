@@ -1,12 +1,8 @@
-//////////////////////////////////////////////////////////////////
-// CDIB - Small wrapper class to handle DIB`s
- 
 #include "cdib.h"
 #include <windows.h>
 
 #define ROUND_UP(VAL, MOD) ((((VAL) + (MOD) - 1) / (MOD)) * (MOD))
  
-//////////////////////////////////////////////////////////////////
 CDIB::CDIB()
 {
     m_hdc = 0;
@@ -16,15 +12,15 @@ CDIB::CDIB()
     m_iWidth = 0;
     m_iHeight = 0;
     m_iSWidth = 0;
+
+    ZeroMemory(&m_bmi, sizeof(m_bmi));
 }
-//////////////////////////////////////////////////////////////////
+
 CDIB::~CDIB()
 {
     Release();
 }
  
-//////////////////////////////////////////////////////////////////
-// Takes DC handle, creates a DIB from given location and size
 bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int iBytesPerPixel)
 {
     // Release the old DIB
@@ -38,15 +34,15 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int
  
     // fill in the BITMAPINFO structure
     //BITMAPINFO bmi;
-    ZeroMemory(&bmi, sizeof(BITMAPINFO));
-    bmi.bmiHeader.biSize            =   sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth           =   iWidth;
-    bmi.bmiHeader.biHeight          =   iInitHeight;
-    bmi.bmiHeader.biPlanes          =   1;
-    bmi.bmiHeader.biBitCount        =   iBytesPerPixel * 8;
-    bmi.bmiHeader.biCompression     =   BI_RGB;
-    bmi.bmiHeader.biXPelsPerMeter   =   72;
-    bmi.bmiHeader.biYPelsPerMeter   =   72;
+    ZeroMemory(&m_bmi, sizeof(BITMAPINFO));
+    m_bmi.bmiHeader.biSize            =   sizeof(BITMAPINFOHEADER);
+    m_bmi.bmiHeader.biWidth           =   iWidth;
+    m_bmi.bmiHeader.biHeight          =   iInitHeight;
+    m_bmi.bmiHeader.biPlanes          =   1;
+    m_bmi.bmiHeader.biBitCount        =   iBytesPerPixel * 8;
+    m_bmi.bmiHeader.biCompression     =   BI_RGB;
+    m_bmi.bmiHeader.biXPelsPerMeter   =   72;
+    m_bmi.bmiHeader.biYPelsPerMeter   =   72;
  
     m_iWidth = iWidth;
     m_iHeight = iHeight;
@@ -57,7 +53,7 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int
     // Get hdc of screen for CreateDIBSection and create the DIB
     HDC hdcScreen = GetDC(NULL);
     m_hbm = CreateDIBSection(
-                hdcScreen, &bmi, GetDIBUsage(), 
+                hdcScreen, &m_bmi, GetDIBUsage(), 
                 (void**)&m_pSrcBits, NULL, 0);
  
     // Create and select the bitmap into a DC
@@ -74,21 +70,58 @@ bool CDIB::Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int
     ReleaseDC(NULL, hdcScreen);
     return true;
 }
-//////////////////////////////////////////////////////////////////
+
+bool CDIB::Load(const char* szFileName, int bytesPerPixel)
+{
+    bool bSuccess = false;
+
+    HBITMAP hbm = (HBITMAP)LoadImage(NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+    if (hbm)
+    {
+        // Map the bitmap into a dc
+        HDC hdc = CreateCompatibleDC(NULL);
+        HBITMAP hbmOld = (HBITMAP)SelectObject(hdc, hbm);
+
+        // Get info about this bitmap       
+        BITMAP bm;
+        if (GetObject(hbm, sizeof(BITMAP), &bm) != 0)
+        {
+            // Convert the bitmap into DIB of known colour depth
+            if (this->Create(hdc, 0, 0, bm.bmWidth, bm.bmHeight, bytesPerPixel))
+            {
+                bSuccess = true;
+            }
+
+            // cleanup hdc
+            SelectObject(hdc, hbmOld);
+            DeleteDC(hdc);
+        }
+
+        // delete the loaded image
+        DeleteObject(hbm);
+    }
+
+    return (bSuccess);
+}
+
 void CDIB::Release()
 {
     if(m_hdc)
     {
         if(m_hbmOld)
         {
-            SelectObject(m_hdc, m_hbmOld);          
+            SelectObject(m_hdc, m_hbmOld);
         }
+
         if(m_hbm)
         {
-            DeleteObject(m_hbm);            
+            DeleteObject(m_hbm);
         }
+
         DeleteDC(m_hdc);
     }
+
     m_hdc = NULL;
     m_hbm = NULL;
     m_hbmOld = NULL;
@@ -96,5 +129,3 @@ void CDIB::Release()
     m_iWidth = 0;
     m_iHeight = 0;
 }
-//////////////////////////////////////////////////////////////////
-//End of File

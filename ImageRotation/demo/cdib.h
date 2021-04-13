@@ -3,19 +3,26 @@
 
 #include <windows.h>
 
-///////////////////////////////////////////////////////////////////
+// CDIB - Small wrapper class to handle DIB`s
 class CDIB
 {
     public:
     CDIB();
     ~CDIB();
  
+    // Takes DC handle, creates a DIB from given location and size
     bool            Create(HDC hdcSrc, int iSrcX, int iSrcY, int iWidth, int iHeight, int bytesPerPixel);
+
+    // Load bitmap from file and cobvert it to specified color depth
+    bool            Load(const char* szFileName, int bytesPerPixel);
+
+    // Release all linked resources
     void            Release();
  
+    // #region Varibles
+
     public:
 
-    // Varibles
     HDC             m_hdc;          // HDC of the DIB
     HBITMAP         m_hbm;          // HBITMAP of the DIB   
     HBITMAP         m_hbmOld;       // old HBITMAP from the hdc
@@ -24,11 +31,17 @@ class CDIB
     int             m_iHeight;      // Height of the DIB
     int             m_iSWidth;      // Storage Width (in bytes)
 
+    // #endregion
+
     protected:
-    BITMAPINFO      bmi;
+    BITMAPINFO      m_bmi;
 
     public:
-    BITMAPINFO     *GetBMI()         { return(&bmi); }
+
+    // Get BITMAPINFO of current structure
+    BITMAPINFO     *GetBMI()         { return(&m_bmi); }
+
+    // Get current DIB Usage (AKA "palette mode")
     UINT            GetDIBUsage()    { return(DIB_RGB_COLORS); }
 };
 
