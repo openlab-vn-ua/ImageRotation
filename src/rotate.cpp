@@ -94,7 +94,7 @@ void RotateDrawFill(
     float fAngle, float fScale)
 {
     // This version takes any dimension source bitmap and wraps.
-    if (0 && IsExp2(srcW) && IsExp2(srcH))
+    if (IsExp2(srcW) && IsExp2(srcH))
     {
         RotateDrawFillFastSrcSizeExp2
         (
