@@ -200,7 +200,6 @@ static void Update(HDC hdc)
 
     for (int i = 0; i < iRotCount; i++)
     {
-
         if (FuncName == FUNC_NAME_RotateDrawClip1)
         {
             RotateDrawClip1
@@ -259,6 +258,17 @@ static void Update(HDC hdc)
     }
      
     double dRotEndT = TimingGetValue();
+
+    double fPixlesCount; // Pixels affected
+
+    if (FuncName == FUNC_NAME_RotateWrapFill)
+    {
+        fPixlesCount = 1.0 * dstW * dstH;
+    }
+    else
+    {
+        fPixlesCount = 1.0 * srcW * srcH * fScale;
+    }
 
     double dUpdateBeginT = TimingGetValue();
 
@@ -320,8 +330,8 @@ static void Update(HDC hdc)
 
         char szBuffer[256];
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "%s Rotate took %7.3fms (~%7.2ffps)",
-             FuncName, (dRotEndT-dRotBeginT) * 1000.0 / iRotCount, 1.0 / ((dRotEndT-dRotBeginT) / iRotCount)));
+             sprintf_s(szBuffer, "%s Rotate took %7.3fms (~%7.2ffps) (~%.1f MP/s)",
+             FuncName, (dRotEndT-dRotBeginT) * 1000.0 / iRotCount, 1.0 / ((dRotEndT-dRotBeginT) / iRotCount), 1.0 * fPixlesCount * iRotCount / (dRotEndT - dRotBeginT) / 1e6));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Render took %7.3fms (~%7.2ffps) [VIEW ZOOM: %d]",
