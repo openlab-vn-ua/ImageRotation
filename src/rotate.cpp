@@ -5,6 +5,11 @@
 #define DEBUG_MARK_COLOR ((RotatePixel_t)(0xFFFFFF))
 #define DEBUG_BACK_COLOR ((RotatePixel_t)(0x3F6FCF))
 
+#define BM_GET(src,stride,x,y) ((RotatePixel_t *)(((char*)(src)) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0]
+#define BM_SET(dst,stride,x,y,c) ((RotatePixel_t *)(((char*)(dst)) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0] = (c)
+
+#define BM_DATA_ADD_OFS(src,offset) ((RotatePixel_t *)(((char*)(src)) + (offset)))
+
 /// <summary>
 /// Checks if source value is power of 2
 /// </summary>
@@ -29,9 +34,6 @@ void RotateDrawFillFastSrcSizeExp2(
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
-    srcDelta /= sizeof(RotatePixel_t);
-    dstDelta /= sizeof(RotatePixel_t);
-
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
     float duRow = dvCol;
@@ -48,7 +50,7 @@ void RotateDrawFillFastSrcSizeExp2(
         float u = rowu;
         float v = rowv;
 
-        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = BM_DATA_ADD_OFS(pDstBase, dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -73,9 +75,7 @@ void RotateDrawFillFastSrcSizeExp2(
             sx &= (srcW-1);
             sy &= (srcH-1);
 
-            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
-
-            *pDst++ = *pSrc++;
+            *pDst++ = BM_GET(pSrcBase, srcDelta, sx, sy);
 
             u += duRow;
             v += dvRow;
@@ -98,7 +98,7 @@ void RotateDrawFill(
     {
         RotateDrawFillFastSrcSizeExp2
         (
-            pDstBase, dstW,dstH,dstDelta,
+            pDstBase, dstW,dstH, dstDelta,
             pSrcBase,srcW, srcH, srcDelta,
             fDstCX, fDstCY,
             fSrcCX, fSrcCY,
@@ -109,9 +109,6 @@ void RotateDrawFill(
 
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
-
-    srcDelta /= sizeof(RotatePixel_t);
-    dstDelta /= sizeof(RotatePixel_t);
 
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
@@ -129,7 +126,7 @@ void RotateDrawFill(
         float u = rowu;
         float v = rowv;
 
-        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = BM_DATA_ADD_OFS(pDstBase, dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -171,9 +168,7 @@ void RotateDrawFill(
 
             sy %= srcH;
 
-            RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
-                         
-            *pDst++ = *pSrc++;
+            *pDst++ = BM_GET(pSrcBase, srcDelta, sx, sy);
 
             u += duRow;
             v += dvRow;
@@ -196,9 +191,6 @@ void RotateDrawClip1(
     if (dstW <= 0) { return; }
     if (dstH <= 0) { return; }
 
-    srcDelta /= sizeof(RotatePixel_t);
-    dstDelta /= sizeof(RotatePixel_t);
-
     float duCol = (float)sin(-fAngle) * (1.0f / fScale);
     float dvCol = (float)cos(-fAngle) * (1.0f / fScale);
     float duRow = dvCol;
@@ -215,7 +207,7 @@ void RotateDrawClip1(
         float u = rowu;
         float v = rowv;
 
-        RotatePixel_t *pDst = pDstBase + (dstDelta * y);
+        RotatePixel_t *pDst = BM_DATA_ADD_OFS(pDstBase, dstDelta * y);
 
         for(int x = 0; x < dstW ; x++)
         {
@@ -238,9 +230,7 @@ void RotateDrawClip1(
 
             if ((u >= 0) && (v >= 0) && (sx < srcW) && (sy < srcH))
             {
-                RotatePixel_t *pSrc = pSrcBase + sx + (sy * srcDelta);
-
-                *pDst++ = *pSrc++;
+                *pDst++ = BM_GET(pSrcBase, srcDelta, sx, sy);
             }
             else
             {
@@ -256,9 +246,6 @@ void RotateDrawClip1(
         rowv += dvCol;
     }
 }
-
-#define BM_GET(src,stride,x,y) ((RotatePixel_t *)(((char*)src) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0]
-#define BM_SET(dst,stride,x,y,c) ((RotatePixel_t *)(((char*)dst) + ((x)*sizeof(RotatePixel_t) + (y)*(stride))))[0] = (c)
 
 void RotateDrawClipExt1
     (
@@ -525,8 +512,6 @@ void RotateDrawClipExt1D
         rowv += dvCol;
     }
 }
-
-#define BM_DATA_ADD_OFS(src,offset) ((RotatePixel_t *)(((char*)src) + (offset)))
 
 void RotateDrawClipExt2
     (
