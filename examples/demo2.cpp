@@ -121,12 +121,13 @@ CDIB*   gDibSrc         = NULL;
 CDIB*   gDibDst         = NULL;
 
 static const char* FUNC_NAME_RotateWrapFill = "RotateWrapFill";
+static const char* FUNC_NAME_RotateDrawClip = "RotateDrawClip";
 static const char* FUNC_NAME_RotateDrawClip1 = "RotateDrawClip1";
 static const char* FUNC_NAME_RotateDrawClipExt1 = "RotateDrawClipExt";
 static const char* FUNC_NAME_RotateDrawClipExt1D = "RotateDrawClipExt1D";
 static const char* FUNC_NAME_RotateDrawClipExt2 = "RotateDrawClipExt2";
 
-static const char* FUNC_NAMES[] = { FUNC_NAME_RotateWrapFill, FUNC_NAME_RotateDrawClip1, FUNC_NAME_RotateDrawClipExt1, FUNC_NAME_RotateDrawClipExt1D, FUNC_NAME_RotateDrawClipExt2 };
+static const char* FUNC_NAMES[] = { FUNC_NAME_RotateWrapFill, FUNC_NAME_RotateDrawClip, FUNC_NAME_RotateDrawClip1, FUNC_NAME_RotateDrawClipExt1, FUNC_NAME_RotateDrawClipExt1D, FUNC_NAME_RotateDrawClipExt2 };
 static const int   FUNC_NAMES_COUNT = sizeof(FUNC_NAMES) / sizeof(FUNC_NAMES[0]);
 
 static const char* IMAGE_NAMES[] = { SZIMAGE_1, SZIMAGE_2 };
@@ -183,9 +184,15 @@ static void Update(HDC hdc)
 
     //ClipImage(pDstBase, dstW, dstH, dstDelta, 10, 75, 150, 190); // work this way also, so you may clip region before draw
 
-    int iRotCount = 500;
-
     const char* FuncName = FUNC_NAMES[giFuncNameIndex];
+
+    int iRotCount;
+
+    #if defined(_DEBUG) || defined(DEBUG)
+    iRotCount = 1000;
+    #else
+    iRotCount = 2000;
+    #endif
 
     if (FuncName == FUNC_NAME_RotateDrawClip1)
     {
@@ -200,7 +207,18 @@ static void Update(HDC hdc)
 
     for (int i = 0; i < iRotCount; i++)
     {
-        if (FuncName == FUNC_NAME_RotateDrawClip1)
+        if (FuncName == FUNC_NAME_RotateDrawClip)
+        {
+            RotateDrawClip
+            (
+                pDstBase, dstW, dstH, dstDelta,
+                pSrcBase, srcW, srcH, srcDelta,
+                fDstCX, fDstCY,
+                fSrcCX, fSrcCY,
+                fAngle, fScale
+            );
+        }
+        else if (FuncName == FUNC_NAME_RotateDrawClip1)
         {
             RotateDrawClip1
             (
@@ -338,8 +356,8 @@ static void Update(HDC hdc)
              (dUpdateEndT-dUpdateBeginT) * 1000, 1.0 / (dUpdateEndT-dUpdateBeginT), giViewZoomScale));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
-             sprintf_s(szBuffer, "Angle %3.6frad %4.1fdeg Scale %3.6f src X=%3.1f Y=%3.1f",
-             (float)gdAngle, (float)(gdAngle/Math_PI*180.0), (float)gdScale, (float) fSrcCX, (float) fSrcCY));
+             sprintf_s(szBuffer, "Angle %3.6frad %4.1fdeg Scale %3.6f src X=%3.1f Y=%3.1f Image=%s[%d x %d]",
+             (float)gdAngle, (float)(gdAngle/Math_PI*180.0), (float)gdScale, (float) fSrcCX, (float) fSrcCY, IMAGE_NAMES[giImageNameIndex], srcW, srcH));
         text_y_pos += TEXT_HEIGHT;
         TextOut(hdc, 5, text_y_pos, szBuffer, 
              sprintf_s(szBuffer, "Left/Right=Rotate, PgUp/PgDn=Scale+/-, A=Auto(on/off), r=Reset, f=Func, i=Image"));
