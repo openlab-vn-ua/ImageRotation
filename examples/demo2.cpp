@@ -134,7 +134,7 @@ static const char* IMAGE_NAMES[] = { SZIMAGE_1, SZIMAGE_2 };
 static const int   IMAGE_NAMES_COUNT = sizeof(IMAGE_NAMES) / sizeof(IMAGE_NAMES[0]);
 
 #define GSCALE_MIN      0.4f
-#define GSCALE_MAX      5.0f
+#define GSCALE_MAX      7.0f
 
 float   gdScale         = 1.0 ;
 float   gdAngle         = 0.0*Math_PI/180.0;
