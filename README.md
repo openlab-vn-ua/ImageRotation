@@ -1,7 +1,7 @@
 # ImageRotation
 Fast Image Rotation algorithms
 
-Playground for studing and implementing fast image rotation algoritms (with reasonable complexity).
+Playground for studying and implementing fast image rotation and scale algoritms (with reasonable complexity).
 
 The code here based on many [references](#References).
 
@@ -22,6 +22,7 @@ void RotateDrawClip
     float fAngle, float fScale
 );
 ```
+*Peformance: ~150 MP/s on Intel i7-10700K CPU @ 3.80GHz for RotateDrawClip*
 
 ## RotateDrawFill
 
